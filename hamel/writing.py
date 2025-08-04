@@ -37,6 +37,8 @@ def gather_urls(urls, tag='example'):
 
 # %% ../nbs/05_writing.ipynb 11
 _annotated_post_urls = L(['https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p1-intro.md', 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p2-evals.md',
+'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p3_reasoning.qmd',
+'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p4_late_interaction.qmd',
 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/evals/inspect.qmd'])
 
 # %% ../nbs/05_writing.ipynb 13
@@ -45,17 +47,28 @@ def outline_slides(slide_path):
 
 # %% ../nbs/05_writing.ipynb 16
 def generate_annotated_talk_post(slide_path, 
-                                 youtube_link, 
+                                 video_source,  # YouTube link or local MP4 path
                                  image_dir,
                                  transcript_path=None, 
                                  example_urls=_annotated_post_urls):
     "Assemble the prompt for the annotated post."
     
-    youtube_chapters = yt.yt_chapters(youtube_link)
+    # Check if video_source is a local MP4 or YouTube URL
+    is_local_video = Path(video_source).exists() and Path(video_source).suffix.lower() == '.mp4'
+    
+    video_chapters = yt.yt_chapters(video_source)
     slide_outline = outline_slides(slide_path)
-    transcript =  Path(transcript_path).read_text() if transcript_path else yt.transcribe(youtube_link)
+    transcript = Path(transcript_path).read_text() if transcript_path else yt.transcribe(video_source)
     examples = gather_urls(example_urls)
     _ = pdf2imgs(slide_path, output_dir=image_dir)
+    
+    # Adjust prompt based on whether it's a YouTube video or local MP4
+    if is_local_video:
+        video_reference = f"the local video file {video_source}"
+        timestamp_note = "Note: For local MP4 files, timestamps cannot be linked directly. Just provide the timestamp in [MM:SS] format."
+    else:
+        video_reference = f"the YouTube video at {video_source}"
+        timestamp_note = f"Additionally, reference the correct timestamp in the form of a timestamped linked to the youtube video that corresponds to the start of each slide. The link to this presentation is {video_source} (so use this when adding timestamps please)."
     
     prompt=f"""Attached is the transcript (in <transcript> tags) of a technical talk for the attached slides. I'd like to make an annotated presentation blog post as illustratd in <example-posts> tags.
 
@@ -69,7 +82,7 @@ Note that images for this post will be placed in {image_dir}/
 
 Refer to slides with naming convention (slide_1.png, slide_2.png, etc)
 
-Additionally, reference the correct timestamp in the form of a timestamped linked to the youtube video that corresponds to the start of each slide.   The link to this presentation is {youtube_link} (so use this when adding timestamps please).  
+{timestamp_note}
 
 I have included other annotated posts as an example for you to understand the format. These examples are in <examples> tags.
 
@@ -82,10 +95,10 @@ Here is the transcript
 {transcript}
 </transcript>
 
-Incase it is helpful, here is here is the YouTube description with chapters from the talk.  However, please use timestamps from the transcript when possible when constructing timestamped links. 
-<youtube-chapters>
-{youtube_chapters}
-</youtube-chapters>
+Incase it is helpful, here is here is the video description with chapters from the talk.  However, please use timestamps from the transcript when possible when constructing timestamped links. 
+<video-chapters>
+{video_chapters}
+</video-chapters>
 
 Below is a brief slide outline (in addition to the attached pdf)
 <slide-outline>
@@ -123,5 +136,7 @@ When writing the introduction, annotation and Q&A keep the following writing gui
 
 Please go ahead and draft the post. Please also include front matter similar to the front matter in the examples and select the best slide from the talk as the cover image (which is not the title slide, but instead another interesting slide that is punchy).
 """
-    draft_post = gem(prompt, [slide_path, youtube_link], model='gemini-2.5-pro')
+    # Use the appropriate video source
+    attachment = [slide_path, video_source] if is_local_video else [slide_path, video_source]
+    draft_post = gem(prompt, attachment, model='gemini-2.5-pro')
     return draft_post

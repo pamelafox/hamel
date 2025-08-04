@@ -4,6 +4,12 @@ quarto_data/
 _quarto_data/
 _quarto_files/
 _hf_files/
+_*
+!_videos/test_video.mp4
+orion_example/
+nbs/orion_example/
+eval_course_example/
+slides_output/
 
 *.bak
 .gitattributes
