@@ -10,6 +10,7 @@ orion_example/
 nbs/orion_example/
 eval_course_example/
 slides_output/
+nbs/eval_course_examples/
 
 *.bak
 .gitattributes

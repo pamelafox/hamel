@@ -25,7 +25,7 @@ def upload_file(pth):
     c = _client()
     f = c.files.upload(file=pth)
     time.sleep(2)
-    for i in progress_bar(range(15)):
+    for i in progress_bar(range(30)):
         try:
             f = c.files.get(name=f.name)
             if f.state == 'ACTIVE': return f
