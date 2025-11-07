@@ -36,10 +36,12 @@ def gather_urls(urls, tag='example'):
     return f'<{tag}s>\n' + '\n'.join(xml) + f'\n<{tag}s>'
 
 # %% ../nbs/05_writing.ipynb 11
-_annotated_post_urls = L(['https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p1-intro.md', 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p2-evals.md',
+_annotated_post_urls = L(['https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/evals/inspect.qmd'
+'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p1-intro.md', 
+'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p2-evals.md',
 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p3_reasoning.qmd',
 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p4_late_interaction.qmd',
-'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/evals/inspect.qmd'])
+'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p5_map.qmd'])
 
 # %% ../nbs/05_writing.ipynb 13
 def outline_slides(slide_path):

@@ -21,4 +21,9 @@ d = { 'settings': { 'branch': 'main',
                           'hamel.yt._format_timestamp': ('yt.html#_format_timestamp', 'hamel/yt.py'),
                           'hamel.yt.transcribe': ('yt.html#transcribe', 'hamel/yt.py'),
                           'hamel.yt.transcribe_local_video': ('yt.html#transcribe_local_video', 'hamel/yt.py'),
-                          'hamel.yt.yt_chapters': ('yt.html#yt_chapters', 'hamel/yt.py')}}}
+                          'hamel.yt.yt_chapters': ('yt.html#yt_chapters', 'hamel/yt.py')},
+            'hamel.zoom': { 'hamel.zoom.download_transcript': ('zoom.html#download_transcript', 'hamel/zoom.py'),
+                            'hamel.zoom.get_zoom_token': ('zoom.html#get_zoom_token', 'hamel/zoom.py'),
+                            'hamel.zoom.list_recordings': ('zoom.html#list_recordings', 'hamel/zoom.py'),
+                            'hamel.zoom.main': ('zoom.html#main', 'hamel/zoom.py'),
+                            'hamel.zoom.make_filename': ('zoom.html#make_filename', 'hamel/zoom.py')}}}

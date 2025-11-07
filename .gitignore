@@ -1,3 +1,5 @@
+.env
+*.pdf
 _docs/
 _proc/
 quarto_data/

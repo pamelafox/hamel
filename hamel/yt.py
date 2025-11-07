@@ -23,7 +23,7 @@ def yt_chapters(url_or_path):
     chapter_prompt="Generate a succinct video summary (1-2 sentences) followed by video chapter timestamps for this video. Format each line of the chapter summaries as 'MM:SS - Chapter Title' (e.g., '02:30 - Introduction'). Start with 00:00. Include all major topics and transitions and be thorough - do not miss any important topics.  For the summary, do not say 'In this video, we will cover the following topics', 'This video discusses..' or anything like that. Instead, reference the main speaker's name if you know it.  If there is a Q&A Section, enumerate individual questions as additional chapters."
     return gem(prompt=chapter_prompt, o=url_or_path, model="gemini-2.5-pro")
 
-# %% ../nbs/01_yt.ipynb 10
+# %% ../nbs/01_yt.ipynb 11
 def _extract_video_id(url: str) -> Optional[str]:
     """Extract YouTube video ID from various URL formats."""
     for pattern in [r'(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)', 
