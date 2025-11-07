@@ -16,25 +16,25 @@ from fastprogress import progress_bar
 
 # %% ../nbs/00_gem.ipynb 9
 def _client():
-    "Get Gemini client"
-    return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    "Get Gemini client context manager"
+    return genai.Client()
 
 # %% ../nbs/00_gem.ipynb 12
 def upload_file(pth):
     if not Path(pth).exists(): raise ValueError(f"File {pth} does not exist.")
-    c = _client()
-    f = c.files.upload(file=pth)
-    time.sleep(2)
-    for i in progress_bar(range(30)):
-        try:
-            f = c.files.get(name=f.name)
-            if f.state == 'ACTIVE': return f
-            elif f.state == 'FAILED': raise Exception(f'File processing for {pth} failed.')
-            time.sleep(10)
-        except: pass # because the gemini file thing is jank
-    raise Exception(f'Timeout processing {pth}')
+    with _client() as c:
+        f = c.files.upload(file=pth)
+        time.sleep(2)
+        for i in progress_bar(range(30)):
+            try:
+                f = c.files.get(name=f.name)
+                if f.state == 'ACTIVE': return f
+                elif f.state == 'FAILED': raise Exception(f'File processing for {pth} failed.')
+                time.sleep(10)
+            except: pass # because the gemini file thing is jank
+        raise Exception(f'Timeout processing {pth}')
 
-# %% ../nbs/00_gem.ipynb 16
+# %% ../nbs/00_gem.ipynb 15
 def _is_url(s):
     "Check if string is a URL"
     if not isinstance(s, str): return False
@@ -65,7 +65,7 @@ def _make_part(o):
         else: raise ValueError(f"Could not parse file or url: {o}")
     return None
 
-# %% ../nbs/00_gem.ipynb 19
+# %% ../nbs/00_gem.ipynb 18
 def gem(prompt, # Text prompt
         o=None, # Optional file/URL attachment or list of attachments
         model='gemini-2.5-flash',
@@ -89,5 +89,6 @@ def gem(prompt, # Text prompt
     config_dict['tools'] = []
     if search: config_dict['tools'].append(types.Tool(google_search=types.GoogleSearch()))
     cfg = types.GenerateContentConfig(**config_dict)
-    resp = _client().models.generate_content(model=model, contents=contents, config=cfg)
+    with _client() as client:
+        resp = client.models.generate_content(model=model, contents=contents, config=cfg)
     return resp.text
