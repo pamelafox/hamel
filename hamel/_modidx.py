@@ -27,4 +27,5 @@ d = { 'settings': { 'branch': 'main',
                             'hamel.zoom.get_zoom_token': ('zoom.html#get_zoom_token', 'hamel/zoom.py'),
                             'hamel.zoom.list_recordings': ('zoom.html#list_recordings', 'hamel/zoom.py'),
                             'hamel.zoom.main': ('zoom.html#main', 'hamel/zoom.py'),
-                            'hamel.zoom.make_filename': ('zoom.html#make_filename', 'hamel/zoom.py')}}}
+                            'hamel.zoom.make_filename': ('zoom.html#make_filename', 'hamel/zoom.py')},
+            'hamel.zoom_cli': {}}}
