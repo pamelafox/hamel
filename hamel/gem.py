@@ -6,7 +6,7 @@
 __all__ = ['upload_file', 'gem']
 
 # %% ../nbs/00_gem.ipynb 5
-import os, time
+import os, time, mimetypes
 from pathlib import Path
 from fastcore.all import *
 from google import genai
@@ -51,21 +51,37 @@ def _make_part(o):
     if isinstance(o, (str, Path)):
         p = Path(o)
         if p.exists():
-            if p.suffix.lower() == '.mp4':
+            # Upload video and audio files via Files API (recommended for larger files)
+            video_exts = {'.mp4', '.mpeg', '.mov', '.avi', '.flv', '.mpg', '.webm', '.wmv', '.3gpp'}
+            audio_exts = {'.wav', '.mp3', '.aiff', '.aac', '.ogg', '.flac', '.m4a'}
+            if p.suffix.lower() in video_exts | audio_exts:
                 f = upload_file(o)
                 return types.Part.from_uri(file_uri=f.uri, mime_type=f.mime_type)
             mime_map = {'.pdf': 'application/pdf', 
                         '.png': 'image/png', 
                         '.jpg': 'image/jpeg', 
                         '.jpeg': 'image/jpeg', 
-                        '.gif': 'image/gif'}
-            mime = mime_map.get(p.suffix.lower(), 'application/octet-stream')
+                        '.gif': 'image/gif',
+                        '.txt': 'text/plain',
+                        '.vtt': 'text/plain',  # VTT treated as plain text
+                        '.md': 'text/markdown',
+                        '.json': 'text/plain',  # Gemini doesn't accept application/json
+                        '.yaml': 'text/yaml',
+                        '.yml': 'text/yaml',
+                        '.toml': 'text/plain',  # Gemini doesn't accept application/toml
+                        '.ipynb': 'text/plain'}  # Gemini doesn't accept application/x-ipynb+json
+            mime = mime_map.get(p.suffix.lower())
+            if mime is None:
+                guessed_mime, _ = mimetypes.guess_type(str(p))
+                if guessed_mime is None:
+                    raise ValueError(f"Cannot determine MIME type for file: {p}. Unsupported extension: {p.suffix}")
+                mime = guessed_mime
             return types.Part.from_bytes(mime_type=mime, data=p.read_bytes())
         elif _is_url(o): return types.Part.from_uri(file_uri=o, mime_type='video/*')
         else: raise ValueError(f"Could not parse file or url: {o}")
     return None
 
-# %% ../nbs/00_gem.ipynb 18
+# %% ../nbs/00_gem.ipynb 19
 def gem(prompt, # Text prompt
         o=None, # Optional file/URL attachment or list of attachments
         model='gemini-2.5-flash',
