@@ -1,0 +1,1691 @@
+<examples>
+<example-1>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/evals/inspect.qmd
+
+Markdown Content:
+---
+title: "Inspect AI, An OSS Python Library For LLM Evals"
+description: "A look at Inspect AI with its creator, JJ Allaire."
+author: ["Hamel Husain"]
+date: 2025-06-23
+order: 8
+image: inspect_images/inspect_cover.png
+---
+
+A few weeks ago, I had the pleasure of hosting [JJ Allaire](https://en.wikipedia.org/wiki/Joseph_J._Allaire) for a guest lecture in our [LLM Evals course](https://bit.ly/evals-ai). For those who might not know, JJ is a legend in the developer tools space. He's the founder of RStudio (now [Posit](https://posit.co/)), the company behind the  RStudio IDE and many foundational packages in the R and Python data science ecosystems. When someone like JJ turns their attention to a new problem, it's worth paying close attention.
+
+His latest endeavor is [Inspect AI](https://inspect.ai-safety-institute.org.uk/), an open-source framework for building and running LLM evaluations. He developed it during a sabbatical with the UK's AI Safety Institute (AISI), an organization that runs thousands of evaluations on frontier models.  Since then, its been adopted as the framework of choice for many of the largest AI labs including Anthropic, DeepMind, and Grok.
+
+The talk was an overview of Inspect's philosophy, architecture, and features. This is an annotated version of his presentation inspired by Simon Willison's [annotated presentations](https://simonwillison.net/tags/annotated-talks/).
+
+## Video
+
+Here is the full video:
+
+{{< video https://www.youtube.com/watch?v=_UY49Q_qFhs >}}
+
+---
+
+ **👉 _We are teaching our last and final cohort of our [AI Evals course](https://bit.ly/evals-ai) next month_** (we have to get back to building). Here is a [35% discount code](https://bit.ly/evals-ai) for readers of this post. 👈 
+
+* * *
+
+## Annotated Presentation
+
+Below is an annotated version of the presentation, with timestamped links to the relevant parts of the presentation for each slide.
+
+### 1. Inspect Overview
+
+![](inspect_images/2025-06-23-13-32-29.png)
+
+*([Timestamp: 01:50](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=110s))*
+
+Inspect is a Python package (`inspect-ai`) designed to bridge the gap between research and production for LLM evals. JJ emphasizes that it's already used for nearly all of the UK AISI's automated evaluations and has seen broad adoption from major AI labs like Anthropic, DeepMind, Grok, and others.
+
+### 2. Motivation
+
+![](inspect_images/2025-06-23-13-38-23.png)
+
+*([Timestamp: 01:23](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=83s))*
+
+The motivation behind Inspect is to improve the reproducibility of evals, especially for large-scale evaluations of frontier models.  Inspect achieves this by providing common tools and a simple entry point to run almost any benchmark with a single command.  In addition to making benchmarks reproducible, Inspect provides a framework that helps with domain-specific and custom evals.
+
+Inspect is open source and actively welcomes external contributions.
+
+### 3. Core Concepts
+
+![](inspect_images/2025-06-23-13-42-22.png)
+
+*([Timestamp: 03:52](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=172s))*
+
+JJ breaks down Inspect into three core concepts: the **Dataset**, the **Solver**, and the **Scorer**.
+*   **Dataset**: This is your set of test cases, each with an `input` (the prompt for the model) and a `target` (the correct answer or grading guidance).
+*   **Solver**: This is the heart of the operation. It's a Python function that defines the logic for how the model should generate its output. This can range from a simple model call to complex chains involving prompt engineering, self-critique, or using tools and agents.
+*   **Scorer**: This function evaluates the model's output against the target. It can be a simple text comparison, a more complex model-graded evaluation (e.g., using an LLM as a judge), or a completely custom validation scheme.
+
+JJ clarifies that the "Solver" is where you can implement more complex reasoning techniques. He gives the examples of using "critique and regenerate" cycles or an "agent scaffold with tool use" to define how the model arrives at its answer.
+
+### 4. Hello, World Example
+
+![](inspect_images/2025-06-23-13-43-13.png)
+
+*([Timestamp: 04:44](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=284s))*
+
+This code example demonstrates the main components of the framework. In this example, the plan is to first use a chain_of_thought prompt, then a standard generate call, and finally a self_critique round before producing the final output that gets score.
+
+A task (`theory_of_mind`) is defined using the `@task` decorator. Inside, it returns a `Task` object that specifies the `dataset`, a `plan` (a list of solvers like `chain_of_thought` and `self_critique`), and a `scorer`. The final `eval()` call runs the entire evaluation against a specified model (`openai/gpt-4`).
+
+### 5. Two Views of Inspect
+
+![](inspect_images/2025-06-23-13-45-37.png)
+
+*([Timestamp: 07:02](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=422s))*
+
+JJ presents two ways to think about and use Inspect. The **High Level** view is about using pre-built building blocks (solvers, scorers, etc.) to quickly compose evaluations. The **Low Level** view exposes a collection of utilities like a universal LLM interface with caching, logging, metrics, tools, and parallel execution.  
+
+The "Low Level" view is described as a "very deep universal LLM interface." This means it provides a consistent way to interact with different model providers and different ways of calling tools, whether they are internal functions or external web searches.
+
+### 6. High Level API Examples
+
+![](inspect_images/2025-06-23-13-47-36.png)
+
+*([Timestamp: 08:06](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=486s))*
+
+The gpqa_diamond task is a straightforward multiple-choice eval. The intercode_ctf task is a more advanced "agentic eval" based on a Capture the Flag challenge. For this task, the model is given access to bash and python tools inside a docker container and must figure out how to complete the challenge.
+
+### 7. Low Level API
+
+![](inspect_images/2025-06-23-13-49-02.png)
+
+*([Timestamp: 09:47](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=587s))*
+
+This slide contrasts the high-level API with its low-level equivalent. Instead of a declarative `plan`, you can write an `async` Python function (`solve`) that gives you full control. Here, you can manually append messages, manage tools, call the model in a loop, and resolve tool calls etc.
+
+This low-level approach is what you would use to build more "advanced agents" or implement "really tailored processing." It gives you direct control over the "mechanics of generation and tool calling," such as managing the conversation state in a loop.
+
+### 8. Solvers
+
+![](inspect_images/2025-06-23-13-55-46.png)
+
+*([Timestamp: 11:27](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=687s))*
+
+A solver is formally defined as a Python function that takes a `TaskState` object and transforms it.
+
+### 9. Baseline Solvers
+
+![](inspect_images/2025-06-23-13-58-00.png)
+
+*([Timestamp: 11:52](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=712s))*
+
+Inspect comes with several baseline solvers. `prompt_template()` is a solver that modifies the current prompt by passing it through a template. The generate() solver is the core component that handles the model call. An important detail is that it automatically resolves tool calls and will repeat the generation-tool call loop if necessary.
+
+### 10. Multiple Choice Solver
+
+![](inspect_images/2025-06-23-13-58-42.png)
+
+*([Timestamp: 12:24](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=744s))*
+
+This is a more specialized solver designed for multiple-choice questions. It intelligently rewrites the prompt to include the choices (e.g., A, B, C), optionally shuffles them to prevent positional bias, and then maps the model's single-token output (like "A") back to the correct choice index for scoring.
+
+### 11. Self Critique Solver
+
+![](inspect_images/2025-06-23-13-59-02.png)
+
+*([Timestamp: 14:02](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=842s))*
+
+The `self_critique` solver first generates a response, then uses a critique template to ask the model (or even a different, more powerful model) to critique its own answer. This critique is then added to the conversation history, and the model is asked to generate a improved response.
+
+### 12. Composition
+
+![](inspect_images/2025-06-23-14-00-30.png)
+
+*([Timestamp: 14:34](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=874s))*
+
+An important design principle of Inspect is composition. Custom solvers and scorers can be created and packaged into standard Python packages. This allows them to be easily shared and reused across many different evaluations. The sheppard package mentioned is an internal tool used at the UK AISI that contains various jailbreaking techniques. These are implemented as solvers that apply different kinds of prompt engineering.
+
+### 13. Composition Example
+
+![](inspect_images/2025-06-23-14-01-15.png)
+
+*([Timestamp: 15:03](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=903s))*
+
+This slide provides an example of composition. It shows a security evaluation that imports the `pap_jailbreak` solver from the `sheppard` package. This jailbreak solver is then inserted into the `plan` before the final `generate` step.
+
+### 14. Tool Use
+
+![](inspect_images/2025-06-23-14-02-06.png)
+
+Inspect has first-class support for tool use. The `TaskState` object can contain a list of available `ToolDef`s. The `use_tools()` solver is the primary way to make these tools available to the `generate()` function, which then handles the full tool-calling loop.
+
+### 15. Agents and Tools
+
+![](inspect_images/2025-06-23-14-04-05.png)
+
+*([Timestamp: 15:56](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=956s))*
+
+JJ outlines several ways to implement and evaluate agents. You can use the built-in `use_tools()` with a ReAct-style prompt for simple "autopilot" agents. For more complex scenarios, you can write bespoke agent logic inside a custom solver. 
+
+Inspect also provides [bridges](https://inspect.aisi.org.uk/agent-bridge.html) that integrate with popular external libraries like LangChain and Autogen. These bridges are a great way to leverage inspect without having to rewrite your agent code. The Agent Bridge works by "monkey-patching" the underlying openai API client. When your external agent makes a standard OpenAI API call, Inspect intercepts it, routes it to the currently configured model for the eval task, and logs the entire interaction. It essentially acts as a proxy.
+
+### 16. Agent API
+
+![](inspect_images/2025-06-23-14-06-29.png)
+
+*([Timestamp: 16:58](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1018s))*
+
+The Agent API provides tools for Linux and web tasks, state sharing across components, forking `TaskState` to sub-agents for complex flows, detailed observability, sandboxing for untrusted code execution, and a configurable approval system for risky actions.
+
+### 17. Agent Tools
+
+![](inspect_images/2025-06-23-14-10-43.png)
+
+*([Timestamp: 20:00](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1200s))*
+
+Inspect provides a suite of pre-built agent tools. These include `Web Search`, `Bash and Python` execution, a `Text Editor`, a `Web Browser` (using headless Chromium), and even a `Computer` tool that lets the agent interact with a desktop environment via screenshots. The `Think` tool also allows the model to explicitly output its reasoning steps.
+
+I thought these looked quite nice for use in your main LLM calls, but JJ insisted that these are for Evals only. JJ commented that "Inspect has almost all the same tools as LangChain, but our users are focused on evals - I don't want to steer people towards using them for other things."  As clarification, you don't want to use separate tools for your main LLM calls and your evals (you should be running the same pipeline where possible).  These are just tools for evals incase your eval flow needs them.
+
+### 18. Agent Approval
+
+![](inspect_images/2025-06-23-14-12-39.png)
+
+*([Timestamp: 21:09](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1269s))*
+
+This slide showcases the interactive agent approval system. When an agent wants to execute a potentially sensitive tool call (like submitting a form on a website), the evaluation can pause and prompt the human operator for approval. The operator can approve, reject, or terminate the task, providing a critical safety layer for agentic evaluations.
+
+This slide shows a [browser use tool](https://inspect.aisi.org.uk/tools-standard.html#sec-web-browser) that looked quite good.  At this point JJ relented and said maybe its ok to use this for things outside evals :)
+
+JJ noted that as more LLM agents are deployed, websites are getting better at bot detection, so make sure you test the browser tools for your eval tasks before you deploy them.
+
+### 19. Agent Evals
+
+![](inspect_images/2025-06-23-14-39-51.png)
+
+*([Timestamp: 21:52](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1312s))*
+
+Inspect comes with implementations of several well-known agent-based benchmarks. This includes **GAIA** for general AI assistants, **GDM Dangerous Capabilities** which involves Capture the Flag cybersecurity challenges, and **SWE-Bench** for resolving GitHub issues.
+
+### 20. Scoring
+
+![](inspect_images/2025-06-23-14-39-51.png)
+
+*([Timestamp: 23:53](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1433s))*
+
+Scoring is flexible in Inspect. It has built-in scorers for conventional pattern matching and templated answers. The model-graded scorer is also built-in and can be heavily customized. Scorers are pluggable, so you can easily provide them from other packages, and JJ notes they expect a lot of innovation in this area. There is also full support for offline/human scoring workflows.
+
+### 21. Custom Scorer Example
+
+![](inspect_images/2025-06-23-14-44-59.png)
+
+*([Timestamp: 24:08](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1448s))*
+
+This example shows the implementation of a custom scorer, `expression_equivalence`. It uses a regular expression to extract an answer, then prompts an LLM to judge if the model's answer is mathematically equivalent to the target expression.
+
+### 22. Production: Parallelism
+
+![](inspect_images/2025-06-23-14-45-16.png)
+
+*([Timestamp: 24:32](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1472s))*
+
+Inspect is designed for massive scale. It can run concurrently against multiple models and tasks. You can configure `max_connections` for API concurrency and `max_subprocesses` for Docker container concurrency. Because of its async architecture, a single node can run dozens of evaluations in parallel with minimal resource usage.
+
+### 23. Production: Eval Sets
+
+![](inspect_images/2025-06-23-14-45-32.png)
+
+*([Timestamp: 24:45](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1485s))*
+
+To handle the unreliability of large-scale systems (e.g., model rate limits, network errors), Inspect has the concept of "Eval Sets". This command-line tool employs best practices for robustness, including automatic retries with configurable strategies, re-using samples from failed tasks so work isn't repeated, and the ability to re-run a command and have it pick up exactly where the last one left off.
+
+### 24. Production: Logging
+
+![](inspect_images/2025-06-23-14-45-53.png)
+
+*([Timestamp: 24:49](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1489s))*
+
+Comprehensive logging is a cornerstone of the framework. Inspect captures all the context required to debug, analyze, and, most importantly, reproduce an evaluation. It provides a Python API for computing on the log files and a log viewer for interactive exploration of the results.
+
+### 25. EvalLog Structure
+
+![](inspect_images/2025-06-23-14-46-13.png)
+
+*([Timestamp: 24:51](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1491s))*
+
+Each evaluation run produces a structured `EvalLog` file. This slide details its contents, which includes the overall status, details about the eval task and model, the solver plan used, a list of every sample evaluated (with its input, output, and score), aggregated results, token usage stats, and any logging messages or errors.
+
+### 26. Log Viewer Screenshot
+
+![](inspect_images/2025-06-23-14-46-38.png)
+
+*([Timestamp: 24:54](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1494s))*
+
+This is the main view of the Inspect log viewer, `inspect-view`. It shows a table of all the samples in an evaluation run. You can see the input, target, the model's answer, and the final score (Correct/Incorrect). At the top, it displays the overall accuracy and other metrics like the bootstrap standard deviation.
+
+### 27. Sample Detail View
+
+*([Timestamp: 25:00](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1500s))*
+
+When you click on a sample in the log viewer, you get a detailed view. This drill-down shows the full input prompt, the target, the complete answer from the model, and the score, providing a clear way to inspect individual successes and failures.
+
+### 28. Message History View
+
+*([Timestamp: 25:02](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1502s))*
+
+For more complex, multi-turn evaluations, the viewer displays the entire message history. This includes the initial user prompt, the assistant's "thinking" process, any tool calls, and the final response, giving you a complete transcript of the agent's interaction.
+
+### 29. Assistant Thinking View
+
+*([Timestamp: 25:05](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1505s))*
+
+This view shows the rich detail captured during an agent's execution. We can see the assistant's internal monologue or "thinking" process, where it breaks down the problem and formulates a plan. This is followed by the actual tool calls it decides to make, like compiling and disassembling a file.
+
+### 30. Inspect View IDE
+
+![](inspect_images/2025-06-23-14-48-53.png)
+
+*([Timestamp: 25:12](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1512s))*
+
+The VS Code plugin allows you to write your evaluation code, run it from the integrated terminal, and immediately see the detailed, interactive results in the `Inspect View` pane without leaving your editor.
+
+JJ mentions a command, inspect view bundle, which takes your evaluation results and creates a standalone, static website that you can publish anywhere, such as on GitHub Pages. This allows for easy sharing of detailed, interactive evaluation reports.
+
+### 32. Sandbox Environments
+
+![Sandbox Environments](inspect_images/2025-06-23-14-49-28.png)
+
+*([Timestamp: 26:04](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1603s))*
+
+A critical feature for safety and security evaluations is sandboxing. Inspect provides a `SandboxEnvironment` abstraction that allows tool code (e.g., Python or shell scripts generated by the LLM) to be executed in an isolated environment. This prevents potentially malicious code from affecting the host system.
+
+### 33. Tool Environment Types
+
+![Tool Environment Types](inspect_images/2025-06-23-14-49-43.png)
+
+*([Timestamp: 26:54](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1614s))*
+
+Inspect has several built-in implementations for these sandbox environments. The local tool environment runs commands in the same file system as the evaluation. JJ explicitly warns that this should only be used if you are already running your entire evaluation inside another, outer sandbox.
+
+### 34. Learning More
+
+![Learning More](inspect_images/2025-06-23-14-49-59.png)
+
+*([Timestamp: 28:13](https://youtu.be/_UY49Q_qFhs?si=t9-YfrS4JN_UAbpM&t=1693s))*
+
+JJ emphasized that Inspect is a open project with over 100 external contributors. He promises that if you put effort into a pull request, they will work with you to get it merged.
+
+JJ wraps up by pointing to several resources for learning more:
+
+*   **Documentation**: `https://inspect.ai-safety-institute.org.uk/` - The documentation for Inspect
+*   **Evals**: `https://inspect.ai-safety-institute.org.uk/evals/`  - Implementations of widely used benchmarks
+*   **Development**: `https://github.com/ukgovernmentbeis/inspect_ai` - The source code for Inspect
+
+---
+
+## Q&A Session
+
+After the presentation, we had a Q&A session. Here are the highlights:
+
+*   **Can you use Inspect to evaluate existing agents, like those built with LangChain or Claude Code?**
+    *   Yes, absolutely. The Agent Bridge feature is designed for this. You can essentially wrap your existing agent (as long as it has a basic message-in, message-out API) and evaluate it within the Inspect framework, getting all the benefits of its logging, scoring, and observability. We are planning on adding an example for Claude Code soon.
+
+*   **Does jailbreaking a model to bypass safety refusals also improve its performance on useful benchmarks like SWE-Bench?**
+    *   Generally, no. Jailbreaks are designed to bypass refusal mechanisms, which are common in safety-related evals (e.g., asking for dangerous information). They don't typically improve performance on capability benchmarks like coding or reasoning, where refusals are not the primary failure mode.
+
+*   **What are your thoughts on annotation tools for creating evaluation datasets?**
+    *   This is definitely on the roadmap. Building good annotation UIs and workflows to help humans create high-quality datasets and evaluate model-graded judges is a key area of interest. It's a complex problem, but there's a lot of potential to build tools that are either data-driven (generating a UI from a schema) or integrate with existing vibe coding tools.
+
+*   **Does Inspect track experiment metadata like cost and latency?**
+    *   Yes. Latency is tracked in detail, even accounting for retries to give an accurate "working time." Token usage is tracked meticulously for every step, which serves as an excellent proxy for cost. A feature to calculate the exact dollar cost based on token counts and public pricing is in a PR and will be available soon.
+
+---
+
+ **👉 _We are teaching our last and final cohort of our [AI Evals course](https://bit.ly/evals-ai) next month_** (we have to get back to building). Here is a [35% discount code](https://bit.ly/evals-ai) for readers of this post. 👈 
+
+* * *
+
+</example-0>
+<example-2>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p1-intro.md
+
+Markdown Content:
+---
+title: "P1: I don't use RAG, I just retrieve documents"
+description: "Ben Clavié's introduction to advanced retrieval techniques"
+image: p1-images/slide_12.png
+page-navigation: true
+order: 2
+date: 2025-06-25
+---
+
+As part of our [LLM Evals course](https://bit.ly/evals-ai){target="_blank"}, I hosted [Benjamin Clavié](https://ben.clavie.eu/){target="_blank"} to kick off a 5-part mini-series on evaluating and optimizing RAG. Ben is a retrieval researcher who has built widely used tools like [RAGatouille](https://github.com/answerdotai/ragatouille) and [rerankers](https://github.com/answerdotai/rerankers) among other things. His talk focused on important developments in RAG and where you should be paying attention (late-interaction, reasoning, evals, multimodal, etc.).
+
+Below is an annotated version of the presentation, with timestamped links for each slide.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Annotated Presentation
+
+![](p1-images/slide_1.png)
+
+*([Timestamp: 00:00:00](https://youtu.be/Evlk9J-B_uc?t=0s){target="_blank"})*
+
+The cheeky title of the talk.
+
+![](p1-images/slide_2.png)
+
+*([Timestamp: 00:01:08](https://youtu.be/Evlk9J-B_uc?t=68s){target="_blank"})*
+
+Ben introduces himself, noting his base in Musashino City, Japan (home of the Ghibli Museum). He currently does ML R&D at Answer.AI. He jokes about his widely-circulated profile picture, which he dubs "The Monopicture," a single photo from five years ago that has taken on a life of its own. He also mentions his recent work on ModernBERT and niceties related to ColBERT, which he promises to discuss later.
+
+![](p1-images/slide_3.png)
+
+*([Timestamp: 00:02:05](https://youtu.be/Evlk9J-B_uc?t=125s){target="_blank"})*
+
+Ben discusses the controversial idea that "RAG is dead." Ben explains that the statement only applies to a very narrow, and often misunderstood, definition of RAG that was popularized by marketing efforts.
+
+![](p1-images/slide_4.png)
+
+*([Timestamp: 00:02:33](https://youtu.be/Evlk9J-B_uc?t=153s){target="_blank"})*
+
+The "RAG" that many people came to know in 2023: simplistic, single-vector semantic search approach may be obsolete. However, the underlying concept of **retrieval** is still relevant.
+
+![](p1-images/slide_5.png)
+
+*([Timestamp: 00:02:45](https://youtu.be/Evlk9J-B_uc?t=165s){target="_blank"})*
+
+Ben breaks down the acronym: **R**etrieval **A**ugmented **G**eneration. He points out that the original RAG paper actually described a process quite different from today's common interpretation, but the name stuck. At its core, the pipeline is simple: you **somehow** retrieve documents and pass them to a generative model to **augment** its output. He argues that there will always be a need to provide models with external information they weren't trained on.
+
+![](p1-images/slide_6.png)
+
+*([Timestamp: 00:04:08](https://youtu.be/Evlk9J-B_uc?t=248s){target="_blank"})*
+
+This slide presents a standard, simplified LLM call: a prompt goes in, the LLM generates a response, and an output comes out. This is the baseline for understanding how RAG changes the process.
+
+![](p1-images/slide_7.png)
+
+*([Timestamp: 00:04:28](https://youtu.be/Evlk9J-B_uc?t=268s){target="_blank"})*
+
+With RAG, a new step is inserted: "Context Documents." Ben emphasizes that the "how" of retrieving these documents doesn't matter for the definition. If you've added external documents to the context window to augment the generation, you're doing RAG. Even manually copy-pasting text into a prompt is, technically, a form of RAG.
+
+![](p1-images/slide_8.png)
+
+*([Timestamp: 00:05:10](https://youtu.be/Evlk9J-B_uc?t=310s){target="_blank"})*
+
+Ben addresses the common argument that since tools like Claude Code don't use "RAG," RAG must be dead. What people often call "RAG" is a naive brute force, single-vector semantic search. This definition was pushed heavily by marketing in 2023-2024 because it was simple to sell. Claiming RAG is dead because we're now using better retrieval tools is, in his words, "akin to claiming HTML is dead because we are now using CSS."
+
+![](p1-images/slide_9.png)
+
+*([Timestamp: 00:06:46](https://youtu.be/Evlk9J-B_uc?t=406s){target="_blank"})*
+
+Ben explains the limitations of single-vector search. It must compress the meaning of an entire document or chunk into a single, relatively small vector (e.g., ~1000 dimensions). This compression inevitably leads to information loss. The model is trained to prioritize information it assumes will be useful for matching queries to documents based on its training data (like Bing search data), which most likely does not look like your specific, domain-heavy data (e.g., a unique codebase). This mismatch is why general-purpose embedding models often struggle with specialized domains like code retrieval.
+
+![](p1-images/slide_10.png)
+
+*([Timestamp: 00:09:45](https://youtu.be/Evlk9J-B_uc?t=585s){target="_blank"})*
+
+Ben tackles the argument that massive context windows (e.g., Gemini's 1M or hypothetical 10M token windows) make RAG obsolete. He uses an analogy: it's like someone in 1999 claiming hard drives are dead because 512MB RAM sticks are coming soon. The reality is that even 10M tokens is a small amount of space for many enterprise knowledge bases or large datasets. Furthermore, the cost and inefficiency of stuffing everything into the context for every query makes it impractical.
+
+![](p1-images/slide_11.png)
+
+*([Timestamp: 00:12:15](https://youtu.be/Evlk9J-B_uc?t=735s){target="_blank"})*
+
+Retrieval is never going away. LLM weights are frozen at a point in time. They don't know about your new internal project, your updated company policy, or that "really cool new [fasthtml](https://www.fastht.ml/) library you want to try." Training a model on every new piece of information is complex and inefficient. Ben argues we wouldn't want models to store all this one-off information permanently anyway; we want their finite weight space to be used for intelligence, not just knowledge storage. Retrieval is necessary to inject this external, up-to-date information.
+
+![](p1-images/slide_12.png)
+
+*([Timestamp: 00:14:32](https://youtu.be/Evlk9J-B_uc?t=872s){target="_blank"})*
+
+Ben summarizes takeaways so far:
+-   RAG isn't going away.
+-   Naive methods (like basic cosine similarity) are showing their limits, pushing us toward better, more sophisticated retrieval techniques.
+-   RAG is the best way to provide models with up-to-date information.
+-   Long context windows are not a replacement for retrieval.
+The Venn diagram illustrates that what's "dead" is the oversimplified idea of brute-forcing everything with a single vector, not RAG generally.
+
+![](p1-images/slide_13.png)
+
+*([Timestamp: 00:15:31](https://youtu.be/Evlk9J-B_uc?t=931s){target="_blank"})*
+
+Classic Ben - more surprises coming!
+
+![](p1-images/slide_14.png)
+
+*([Timestamp: 00:15:52](https://youtu.be/Evlk9J-B_uc?t=952s){target="_blank"})*
+
+There is more to discuss re: better retrieval methods.
+
+![](p1-images/slide_15.png)
+
+*([Timestamp: 00:15:54](https://youtu.be/Evlk9J-B_uc?t=954s){target="_blank"})*
+
+Ben returns to his analogy. While more RAM didn't kill hard drives, SSDs did (for consumers). An SSD is just a "better hard drive." Similarly, what killed "2023 RAG" is simply **better RAG** (and concretely, better forms of retrieval).
+
+![](p1-images/slide_16.png)
+
+*([Timestamp: 00:17:03](https://youtu.be/Evlk9J-B_uc?t=1023s){target="_blank"})*
+
+To showcase the breadth of retrieval, Ben lists a variety of tools: `grep`, `wget`, agentic search, `BM25`, `ColBERT`, web search, and even reasoning. These are all valid retrieval methods. **The best approach often involves using them in combination.**
+
+![](p1-images/slide_17.png)
+
+*([Timestamp: 00:18:20](https://youtu.be/Evlk9J-B_uc?t=1100s){target="_blank"})*
+
+Ben acknowledges the overwhelming landscape of retrieval techniques. It's no longer the simple, one-trick pony it was once marketed as. To help navigate this, he introduces the upcoming speakers who will cover specific "hot topics."
+
+![](p1-images/slide_18.png)
+
+*([Timestamp: 00:19:34](https://youtu.be/Evlk9J-B_uc?t=1174s){target="_blank"})*
+
+The first guest expert introduced is [Nandan Thakur](https://maven.com/p/fae749/modern-ir-evaluation-in-the-generative-rag-era){target="_blank"}. With thousands of retrieval approaches available, trustworthy benchmarks are important. However, popular benchmarks like BEIR and MTEB are now part of the training data for all base models, leading to data contamination and giving a weaker signal. Nandan, who led the design of BEIR, will discuss his new approaches to creating non-overfitted, trustable benchmarks, such as the continuously updated `FreshStack`.
+
+![](p1-images/slide_19.png)
+*([Timestamp: 00:21:15](https://youtu.be/Evlk9J-B_uc?t=1275s){target="_blank"})*
+
+Next up is [Orion Weller](https://maven.com/p/d6c44b/reasoning-opens-up-new-retrieval-frontiers){target="_blank"}, who researches the intersection of reasoning and retrieval. How does retrieval fit into a world where models can "ramble on about their thoughts"? Orion will explore whether retrievers can think or use the reasoning of other models to improve performance.
+
+![](p1-images/slide_20.png)
+*([Timestamp: 00:22:24](https://youtu.be/Evlk9J-B_uc?t=1344s){target="_blank"})*
+
+[Antoine Chaffin](https://maven.com/p/1973fe/going-further-late-interaction-beats-single-vector-limits){target="_blank"} will discuss late-interaction and multi-vector models like ColBERT. These models address the information loss of single-vector methods by using a vector for each token. Antoine will explain how they work and introduce his work on `ColPali` to make these powerful models easy to use.
+
+![](p1-images/slide_21.png)
+
+*([Timestamp: 00:23:39](https://youtu.be/Evlk9J-B_uc?t=1419s){target="_blank"})*
+
+The final talk features [Bryan Bischof and Ayush Chaurasia](https://maven.com/p/f9eb59/the-map-is-not-the-territory-highly-multimodal-search){target="_blank"} on multimodal search. They'll explain that for multimodal data like graphs and tables, naive semantic search alone is insufficient. They will share how they created their best multimodal search recipe by combining modern techniques with "ancient tools."
+
+![](p1-images/slide_22.png)
+
+*([Timestamp: 00:24:54](https://youtu.be/Evlk9J-B_uc?t=1494s){target="_blank"})*
+
+You can sign up for the series with the links above, or here: [p2: Evals](https://maven.com/p/fae749/modern-ir-evaluation-in-the-generative-rag-era){target="_blank"}, [p3: Reasoning](https://maven.com/p/d6c44b/reasoning-opens-up-new-retrieval-frontiers){target="_blank"}, [p4: Late-Interaction](https://maven.com/p/1973fe/going-further-late-interaction-beats-single-vector-limits){target="_blank"}, and [p5: Multimodal](https://maven.com/p/f9eb59/the-map-is-not-the-territory-highly-multimodal-search){target="_blank"}.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Video
+
+Here is the full video:
+
+{{< video https://youtu.be/Evlk9J-B_uc >}}
+
+</example-1>
+<example-3>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p2-evals.md
+
+Markdown Content:
+---
+title: "P2: Modern IR Evals For RAG"
+description: "Nandan Thakur on why traditional IR evals are insufficient for RAG and how new benchmarks like FreshStack provide a better path forward."
+image: p2-images/slide_19.png
+page-navigation: true
+order: 3
+date: 2025-07-02
+---
+
+As part of our [LLM Evals course](https://bit.ly/evals-ai), I hosted [Nandan Thakur](https://thakur-nandan.github.io/){target="_blank"} for the second part of our 5-part mini-series on evaluating and optimizing RAG. Nandan is a researcher at the University of Waterloo and a key contributor to major Information Retrieval (IR) benchmarks, including BEIR and the new FreshStack. His talk explains why traditional IR evals designed for search engines may be insufficient for RAG systems. He argues that LLM-generated answers often carry different retrieval goals which necessitate different IR metrics.
+
+Below is an annotated version of his presentation, with timestamped links for each slide.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Annotated Presentation
+
+![](p2-images/slide_1.png)
+
+*([Timestamp: 00:00:00](https://www.youtube.com/watch?v=Trps2swgeOg&t=0s))*
+
+The title slide for Nandan's talk, "Modern IR Evaluation in the RAG Era."
+
+![Speaker Introduction](p2-images/slide_2.png)
+
+*([Timestamp: 00:00:14](https://www.youtube.com/watch?v=Trps2swgeOg&t=14s))*
+
+Nandan introduces himself as a fourth-year Ph.D. student at the University of Waterloo. He outlines his background, including research at UKP-TU and internships at Google Research and Databricks. He highlights his work on the BEIR, MIRACL, and FreshStack benchmarks, and the TREC RAG track.
+
+![Overview of the Talk](p2-images/slide_3.png)
+
+*([Timestamp: 00:01:09](https://www.youtube.com/watch?v=Trps2swgeOg&t=69s))*
+
+Nandan outlines the presentation's three parts: a history of traditional IR evaluation, an explanation of why evaluation needs to change for RAG, and a deep dive into the FreshStack benchmark as a modern solution.
+
+![History of Traditional IR](p2-images/slide_4.png)
+
+*([Timestamp: 00:01:45](https://www.youtube.com/watch?v=Trps2swgeOg&t=105s))*
+
+This slide provides historical context. While RAG is new, Information Retrieval is a field with over 60 years of history. The slide contrasts an early Google interface with a modern one to show the evolution of web search.
+
+![IR's 60-Year History](p2-images/slide_5.png)
+
+*([Timestamp: 00:01:50](https://www.youtube.com/watch?v=Trps2swgeOg&t=110s))*
+
+Nandan emphasizes IR's history by showing a 1965 paper on the SMART Retrieval System, an early automated document retrieval system. He also introduces the Text Retrieval Conference (TREC), an influential conference since the 1990s that continues to produce IR benchmarks and standards.
+
+![TREC Conference Tracks](p2-images/slide_6.png)
+
+*([Timestamp: 00:03:00](https://www.youtube.com/watch?v=Trps2swgeOg&t=180s))*
+
+A diagram from NIST illustrates the breadth of TREC's evaluation tasks from 1992 to 2020. These tracks range from classic ad-hoc retrieval to specialized areas like multilingual search and human-in-the-loop evaluation, demonstrating the field's ongoing evolution.
+
+![The Cranfield Paradigm](p2-images/slide_7.png)
+
+*([Timestamp: 00:03:54](https://www.youtube.com/watch?v=Trps2swgeOg&t=234s))*
+
+Nandan introduces the **Cranfield Paradigm**, the foundation of traditional IR evaluation developed in the 1960s. It established the concept of a **test collection**, comprising three components:
+
+1.  **Topics:** A fixed set of user queries.
+2.  **Corpus:** A fixed collection of documents.
+3.  **Relevance Judgments:** Human-annotated labels indicating which documents are relevant to which queries.
+
+This three-part structure remains the basis for most IR benchmarks today.
+
+![Examples of Test Collections](p2-images/slide_8.png)
+
+*([Timestamp: 00:06:00](https://www.youtube.com/watch?v=Trps2swgeOg&t=360s))*
+
+Nandan shows examples of modern test collections. He highlights **BEIR** for its diversity of tasks, **MIRACL** for multilingual retrieval, and the typical **TREC** query structure, which includes a `title`, `description`, and detailed `narrative`.
+
+![Introducing the BEIR Benchmark](p2-images/slide_9.png)
+
+*([Timestamp: 00:07:20](https://www.youtube.com/watch?v=Trps2swgeOg&t=440s))*
+
+This slide introduces the BEIR (Benchmarking-IR) benchmark, which was among the first to popularize zero-shot evaluation for retrieval models.
+
+![What is Zero-Shot Evaluation?](p2-images/slide_10.png)
+
+*([Timestamp: 00:07:38](https://www.youtube.com/watch?v=Trps2swgeOg&t=458s))*
+
+Nandan explains **zero-shot evaluation**, where a model is tested on a domain or task it has not seen during training. This contrasts with *in-domain* evaluation (training and testing on similar data). Zero-shot evaluation is more realistic because high-quality, labeled training data for niche use cases is scarce and expensive to create.
+
+![The Problem BEIR Solved: Overfitting](p2-images/slide_11.png)
+
+*([Timestamp: 00:10:09](https://www.youtube.com/watch?v=Trps2swgeOg&t=609s))*
+
+Nandan explains the motivation for BEIR. Around 2020-2021, the field focused heavily on the MSMARCO dataset, leading to **saturation** (performance plateaus) and **overfitting**. BEIR was created to combat this by providing a diverse set of datasets to test a model's generalization ability beyond a single domain.
+
+![The Problem with BEIR Today](p2-images/slide_12.png)
+
+*([Timestamp: 00:11:10](https://www.youtube.com/watch?v=Trps2swgeOg&t=670s))*
+
+Nandan explains that BEIR is no longer a truly "zero-shot" benchmark. Researchers now often include BEIR's training sets in their model development pipelines. This, along with private models using unknown training data, repeats the overfitting problem that BEIR was designed to solve.
+
+![Leaderboard Saturation](p2-images/slide_13.png)
+
+*([Timestamp: 00:13:20](https://www.youtube.com/watch?v=Trps2swgeOg&t=800s))*
+
+Nandan highlights a practical issue: leaderboards are now too crowded to be useful. The MTEB leaderboard contains over 400 models, with the top contenders separated by marginal scores. This makes it difficult for practitioners to select a model and raises the question of how these models perform on other, more specialized tasks.
+
+![Summary of Challenges](p2-images/slide_14.png)
+
+*([Timestamp: 00:14:43](https://www.youtube.com/watch?v=Trps2swgeOg&t=883s))*
+
+This slide summarizes the limitations of existing test collections like BEIR. They are often static, leading to data contamination risk. They can suffer from incomplete "shallow labeling" from human annotators. They may also lack realistic question distributions, prompting even the creators of benchmarks like HotpotQA to advise against their use for modern agentic systems.
+
+![The Evolution of Search](p2-images/slide_15.png)
+
+*([Timestamp: 00:17:28](https://www.youtube.com/watch?v=Trps2swgeOg&t=1048s))*
+
+Nandan contrasts the old and new search paradigms. "Search back then" shows a ranked list of links, while "Search now" shows a generated answer block with citations, characteristic of RAG systems.
+
+![Information Retrieval: Before and After RAG](p2-images/slide_16.png)
+
+*([Timestamp: 00:18:20](https://www.youtube.com/watch?v=Trps2swgeOg&t=1100s))*
+
+This slide diagrams the architectural shift. Before RAG, a search model returned a ranked list of documents to the user. In the RAG era, the search model provides retrieved documents as context to an LLM, which then generates a response for the user.
+
+![Traditional vs. Modern Day RAG Users](p2-images/slide_17.png)
+
+*([Timestamp: 00:19:10](https://www.youtube.com/watch?v=Trps2swgeOg&t=1150s))*
+
+Nandan contrasts the two user types. A traditional search user is impatient, asks short queries, and scans a ranked list to click the first relevant link. A modern RAG user is patient, asks longer queries, and waits for a synthesized summary with citations, which they may use for verification.
+
+![The Mismatch in Evaluation Objectives](p2-images/slide_18.png)
+
+*([Timestamp: 00:21:08](https://www.youtube.com/watch?v=Trps2swgeOg&t=1268s))*
+
+This slide presents the talk's central argument. Traditional metrics like **MRR** (Mean Reciprocal Rank) and **NDCG** (Normalized Discounted Cumulative Gain) were designed for the traditional objective: "Did we rank the relevant page at #1?" The new RAG objective is: "Did we fetch *every piece of evidence* needed for the LLM to answer this question?" For this new goal, MRR and NDCG may be insufficient on their own, as they do not measure comprehensive evidence collection or redundancy (more on that later).
+
+![Why RAG Metrics Need to Change](p2-images/slide_19.png)
+
+*([Timestamp: 00:23:20](https://www.youtube.com/watch?v=Trps2swgeOg&t=1400s))*
+
+The argument is not to discard traditional relevance but to expand the evaluation criteria for RAG. While **Relevancy is [still] important**, it must now be balanced with new goals like finding a **minimal spanning document set**. This concept captures the need for a set of documents that is not only relevant but also comprehensively covers all aspects of an answer without being redundant.
+
+![Introducing FreshStack](p2-images/slide_20.png)
+
+*([Timestamp: 00:24:50](https://www.youtube.com/watch?v=Trps2swgeOg&t=1490s))*
+
+Nandan introduces **FreshStack**, a modern IR benchmark developed with Databricks. It is designed to evaluate retrieval for RAG on technical documents.
+
+![Motivation for FreshStack](p2-images/slide_21.png)
+
+*([Timestamp: 00:25:00](https://www.youtube.com/watch?v=Trps2swgeOg&t=1500s))*
+
+The motivation for FreshStack was to create a realistic RAG benchmark that overcomes the limitations of existing academic benchmarks, which are often static and artificially easy. The framework was designed to use real user questions, ground answers in real-time documents, be scalable, and be new to avoid data contamination.
+
+![FreshStack Queries: Stack Overflow](p2-images/slide_22.png)
+
+*([Timestamp: 00:26:16](https://www.youtube.com/watch?v=Trps2swgeOg&t=1576s))*
+
+FreshStack sources its queries from **Stack Overflow**, an ideal source for long, complex, real-world questions with community-vetted answers. To mitigate data contamination, the benchmark uses questions from five recent and niche topics asked primarily in 2023 and 2024.
+
+![FreshStack Corpus: GitHub Repositories](p2-images/slide_23.png)
+
+*([Timestamp: 00:27:30](https://www.youtube.com/watch?v=Trps2swgeOg&t=1650s))*
+
+The document corpus comes from the **GitHub Repositories** of the corresponding topics. This provides a constantly updated source of technical documentation and code. An interesting finding is that for technical queries, the questions can be significantly longer than the answers.
+
+![The FreshStack Pipeline](p2-images/slide_24.png)
+
+*([Timestamp: 00:28:18](https://www.youtube.com/watch?v=Trps2swgeOg&t=1698s))*
+
+Nandan explains the three-step automated pipeline for building FreshStack:
+
+1.  **Nuggetization:** A Stack Overflow answer is broken down by GPT-4o into essential, atomic facts or "nuggets."
+2.  **Oracle Retrieval:** A diverse pool of candidate documents is retrieved from the corpus using a hybrid of models.
+3.  **Support w/ Nuggets:** A GPT-4o judge checks which retrieved document chunks support each individual nugget, creating fine-grained relevance judgments.
+
+![Step I: Nuggetization Example](p2-images/slide_25.png)
+
+*([Timestamp: 00:29:50](https://www.youtube.com/watch?v=Trps2swgeOg&t=1790s))*
+
+This slide shows a concrete example of nuggetization. An answer to a `Chroma.from_documents` error is broken down into four key facts: the cause of the error, the required import, the initialization step, and the function call.
+
+![Step II & III: Oracle Retrieval & Nugget Support](p2-images/slide_26.png)
+
+*([Timestamp: 00:30:50](https://www.youtube.com/watch?v=Trps2swgeOg&t=1850s))*
+
+This slide illustrates the final steps. After a document is retrieved, the system checks which of the four nuggets it supports. This process creates nugget-level relevance labels, forming the basis for the new evaluation metrics.
+
+![FreshStack Evaluation Metrics](p2-images/slide_27.png)
+
+*([Timestamp: 00:31:26](https://www.youtube.com/watch?v=Trps2swgeOg&t=1886s))*
+
+Nandan introduces the three metrics used in FreshStack, which provide a holistic view of RAG retrieval performance (for this specific use case):
+
+1.  **Diversity (alpha-nDCG@10):** Measures non-redundancy, penalizing the retrieval of multiple documents that support the same fact.
+2.  **Grounding (Coverage@20):** Measures the percentage of unique nuggets supported by the retrieved documents, directly evaluating evidence collection.
+3.  **Relevance (Recall@50):** A traditional metric that serves as a foundational check on whether the retrieved documents are on-topic.
+This multi-faceted approach augments traditional relevance with metrics tailored to the specific goals of RAG.
+
+![FreshStack Results & Takeaways](p2-images/slide_28.png)
+
+*([Timestamp: 00:33:19](https://www.youtube.com/watch?v=Trps2swgeOg&t=1999s))*
+
+Nandan presents results from the benchmark. Key findings include that current retrieval techniques struggle on these realistic tasks, and no single model performs best across all topics. The large gap between current model performance and the theoretical "Oracle" maximum indicates significant room for improvement.
+
+![The FreshStack Leaderboard & Colab](p2-images/slide_29.png)
+
+*([Timestamp: 00:34:55](https://www.youtube.com/watch?v=Trps2swgeOg&t=2095s))*
+
+Nandan shares the public FreshStack leaderboard and a Google Colab notebook. The notebook provides a script for users to evaluate their own models on FreshStack using its multi-dimensional metrics.
+
+![What Did We Learn Today?](p2-images/slide_30.png)
+
+*([Timestamp: 00:36:01](https://www.youtube.com/watch?v=Trps2swgeOg&t=2161s))*
+
+This slide summarizes the talk's main points. Traditional IR evaluation may be insufficient for RAG depending on the use case. Benchmarks like BEIR are now suffering from overfitting. Often, the goal of RAG retrieval is evidence collection, requiring metrics that evaluate diversity, informativeness, and correctness in addition to relevance.
+
+![Thank You](p2-images/slide_31.png)
+
+*([Timestamp: 00:37:15](https://www.youtube.com/watch?v=Trps2swgeOg&t=2235s))*
+
+Nandan concludes by thanking his collaborators. The slide's meme reinforces his message: good evaluations are essential for developing better models.
+
+---
+
+## Reflections
+
+Nandan's message was to consider other retrieval metrics beyond relevance based on your product's needs. He argued that we must sometimes reconsider what "good" retrieval means. For the stack overflow use case, he considered multiple dimensions of performance:
+
+*   **Grounding (or Coverage):** Did the retrieval system fetch *all* the evidence needed to construct a complete and accurate answer? A missing fact can lead to an incomplete or incorrect generation, even if the retrieved documents are otherwise highly relevant.
+*   **Diversity:** Are the retrieved documents efficiently informative? Retrieving multiple documents that repeat the same information is less valuable than retrieving a set of documents that each contribute a unique and essential fact.
+*   **Relevance:** Is the retrieved information on-topic? This remains a fundamental check. A diverse and well-grounded set of documents is useless if it pertains to the wrong subject.
+
+This is not a call to discard traditional metrics but to **augment** them. The FreshStack benchmark, with its blend of Recall, Coverage, and Diversity metrics, is an example of this.
+
+## Q&A Session
+
+*   **How well does FreshStack generalize outside of coding-related domains?**
+    Nandan feels that FreshStack approach should generalize well outside of coding-related domains, but more experiments are needed. The pipeline of nuggetization, retrieval, and grounding can be applied to any domain with a corpus and question-answer pairs, allowing for the creation of a "FreshStack" for finance, law, or other areas.
+
+*   **For domain-specific RAG, should people build their own evaluations mimicking this approach?**
+    Yes, but the relative importance of each dimension (Diversity, Grounding, Relevance) depends on the use case. For patent search, recall is critical. For a comparative question, coverage of all viewpoints is important. Weighting thiese metrics into a combined score according to the product needs is a reasonable approach. 
+
+*   **Does the FreshStack leaderboard align with intuitions about the best retrieval models?**
+    The leaderboard shows that some popular proprietary models can underperform classic baselines like BM25 on this benchmark. It also highlights that recent open-source models (e.g., Qwen3, Stella) are now highly competitive with top closed-source offerings, and that performance does not always scale with model size.
+
+*   **How does this evaluation framework interact with advanced retrieval methods?**
+    The evaluation framework is method-agnostic. While current models on the leaderboard use single-step retrieval, more complex methods like multi-query decomposition or late-interaction models can be evaluated using the same principles. The final set of retrieved documents can still be measured for its diversity, coverage, and recall, regardless of how it was generated.
+
+*   **What are you working on next?**
+    Nandan is focusing on generating high-quality synthetic training data for RAG systems. He is also an organizer for the TREC RAG track, where he plans to introduce the diversity and grounding metrics from FreshStack to help push the community toward more robust evaluation standards.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Video
+
+Here is the full video:
+
+{{< video https://youtu.be/Trps2swgeOg >}}
+
+</example-2>
+<example-4>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p3_reasoning.qmd
+
+Markdown Content:
+---
+title: "P3: Optimizing Retrieval with Reasoning Models"
+description: "Orion Weller from Johns Hopkins University on making retrieval systems understand complex instructions and reason about documents, featuring Promptriever and Rank1."
+image: p3-images/slide_97.png
+page-navigation: true
+order: 4
+date: 2025-07-06
+---
+
+As part of our [LLM Evals course](https://bit.ly/evals-ai){target="_blank"}, I hosted [Orion Weller](https://orionweller.github.io/){target="_blank"} from Johns Hopkins University for our 5-part mini-series on evaluating and optimizing RAG. Orion's research focuses on embedding the instruction-following and reasoning capabilities of modern Large Language Models (LLMs) directly into the retrieval process.
+
+In his talk, Orion argues that while LLMs have improved RAG, the core retrieval step has remained static. He introduces a paradigm where instruction-following and reasoning are baked directly into retrieval models, a fundamental shift from using LLMs for query rewriting or as generic rerankers.
+
+His approach is showcased with two models:
+
+*   **Promptriever (bi-encoder):** Creates "instruction-aware" embeddings by training on a novel dataset containing **instruction negatives**. These are examples where a document is relevant to a query but *not* its specific instruction (e.g., "find a document using a metaphor"). This forces the model to encode abstract instructions directly into the query embedding, allowing it to surface documents from a massive corpus that a standard retriever would miss.
+
+*   **Rank1 (reranker):** A smaller model fine-tuned by **distilling the reasoning traces** of a larger model. It generates an explicit, auditable chain of thought to assess relevance. This specialized training makes it exceptionally good at reasoning, allowing it to uncover novel, relevant documents invisible to previous systems.
+
+Below is an annotated version of his presentation with timestamped links.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Annotated Presentation
+
+![](p3-images/slide_1.png)
+
+*([Timestamp: 00:00:00](https://youtu.be/YB3b-wPbSH8?t=0s))*
+
+Title slide for Orion Weller's talk on integrating instruction following and reasoning into information retrieval (IR).
+
+![](p3-images/slide_2.png)
+
+*([Timestamp: 00:00:18](https://youtu.be/YB3b-wPbSH8?t=18s))*
+
+The talk begins by highlighting the user-facing interfaces of modern LLMs like ChatGPT, which have set new expectations for how we interact with AI. One key capability of LLMs is **instruction following**: executing complex, multi-part natural language instructions with high fidelity.
+
+![](p3-images/slide_4.png)
+
+*([Timestamp: 00:00:36](https://youtu.be/YB3b-wPbSH8?t=36s))*
+
+Orion shows the result of a pirate-themed haiku prompt. The model successfully adheres to all constraints: it generates a haiku, maintains a pirate style, and mentions "RAG," demonstrating a level of instruction following that is a recent and significant advancement.
+
+![](p3-images/slide_5.png)
+
+*([Timestamp: 00:00:58](https://youtu.be/YB3b-wPbSH8?t=58s))*
+
+A second key capability is **reasoning**, also known as test-time compute or "thinking." The slide shows a model verbalizing its thought process to solve a problem, generating intermediate "thinking tokens" that outline its step-by-step logic before providing the final answer. This ability to break down and reason about a task is a major focus in the LLM community.
+
+![](p3-images/slide_6.png)
+
+*([Timestamp: 00:01:41](https://youtu.be/YB3b-wPbSH8?t=101s))*
+
+With these LLM capabilities established, Orion poses the talk's central question: how can we integrate these instruction-following and reasoning abilities directly into the retrieval process, moving beyond simply using LLMs to summarize search results?
+
+![](p3-images/slide_7.png)
+
+*([Timestamp: 00:01:52](https://youtu.be/YB3b-wPbSH8?t=112s))*
+
+To illustrate how little the search paradigm has changed, Orion shows Google's interface from 1999.
+
+![](p3-images/slide_8.png)
+
+*([Timestamp: 00:01:58](https://youtu.be/YB3b-wPbSH8?t=118s))*
+
+He contrasts it with a modern Google search bar. Despite 26 years of development, the fundamental interaction remains the same: a user types keywords, and the system matches them to return a list of links.
+
+![](p3-images/slide_9.png)
+
+*([Timestamp: 00:02:17](https://youtu.be/YB3b-wPbSH8?t=137s))*
+
+This slide shows a modern "SearchGPT" style interface, which provides a generated, conversational answer.
+
+![](p3-images/slide_11.png)
+
+*([Timestamp: 00:02:46](https://youtu.be/YB3b-wPbSH8?t=166s))*
+
+Despite the interface, Orion argues the underlying retrieval process has not evolved. Even in advanced systems, the LLM is often just a "wrapper." The system sends the query to a traditional search engine, gets back a standard list of results, and then uses the LLM to summarize them. The retrieval step itself hasn't gained the new capabilities of the LLM. Orion's work aims to change this.
+
+![](p3-images/slide_14.png)
+
+*([Timestamp: 00:03:58](https://youtu.be/YB3b-wPbSH8?t=238s))*
+
+To illustrate current limitations, Orion starts with **Keyword Search**, which relies on exact lexical matching. Given a query and three documents, keyword search matches "Data Encryption Standards" and "Wolves Outside Your Data" because they contain the keyword "data."
+
+It fails to retrieve "Digital Protection" because it lacks the keyword "data," even though "digital" is semantically similar, highlighting the brittleness of keyword-only approaches.
+
+![](p3-images/slide_16.png)
+
+*([Timestamp: 00:04:11](https://youtu.be/YB3b-wPbSH8?t=251s))*
+
+The next evolution is **Semantic Search**, which matches based on meaning, often by representing queries and documents as vectors in a shared semantic space. A good semantic search model would retrieve all three documents, as it understands the relationship between "data" and "digital," and "privacy" and "protection." This improves on keyword search but still falls short of true instruction following.
+
+![](p3-images/slide_20.png)
+
+*([Timestamp: 00:05:25](https://youtu.be/YB3b-wPbSH8?t=325s))*
+
+Orion introduces the next paradigm: **Instruction-based Search**, where the query is a nuanced command. The user wants to find documents about data privacy that also use "extended metaphors."
+
+An instruction-based search system should understand this meta-level constraint and retrieve only the "Wolves Outside Your Data" document, which uses a metaphorical title. It correctly identifies that the other two documents, while topically relevant, do not meet the stylistic instruction.
+
+This example illustrates the limitation of reranking results of standard semantic search (a popular approach in RAG). Such an approach would fail here because a semantic search model has no way to understand the constraint "uses an extended metaphor." It would rank documents based only on their relevance to "data privacy," meaning the "Wolves" document might not score high enough to even be considered by the reranker. To solve this, the instruction must influence the **initial retrieval** to change which documents are considered relevant in the first place.
+
+![](p3-images/slide_21.png)
+
+*([Timestamp: 00:06:16](https://youtu.be/YB3b-wPbSH8?t=376s))*
+
+Orion pushes the concept to its extreme with **Prompt and Reasoning-based Search**. The query now includes instructions about the desired *behavior* of the search engine, such as "Have really high recall or I will lose my job."
+
+A traditional search engine would misinterpret this, likely searching for documents containing the word "recall." An advanced, reasoning-based retriever should understand the user's intent and adjust its retrieval strategy, for example by lowering its relevance threshold to ensure high recall.
+
+![](p3-images/slide_25.png)
+
+*([Timestamp: 00:06:42](https://youtu.be/YB3b-wPbSH8?t=402s))*
+
+What is an instruction in the context of IR? Orion breaks it down into several categories.
+
+First, instructions can refer to **document attributes** like date, length, or source. A retriever should understand these from document content without needing pre-processed metadata. Second, they can involve **NLU aspects**, such as document sentiment or writing style. Third, they can include **logical conditions**, combining multiple constraints with operators like AND, OR, and NOT.
+
+The space of possible instructions mirrors the complexity of natural language.
+
+![](p3-images/slide_28.png)
+
+*([Timestamp: 00:07:31](https://youtu.be/YB3b-wPbSH8?t=451s))*
+
+We are already used to prompting LLMs with complex instructions. Since modern retrievers are built on LLMs, we should be able to interact with them in the same way.
+
+![](p3-images/slide_32.png)
+
+*([Timestamp: 00:07:45](https://youtu.be/YB3b-wPbSH8?t=465s))*
+
+Orion introduces two models from his research that embody these principles. First is **Promptriever**, a fast embedding model for following instructions during initial retrieval.
+
+Second is **Rank1**, a powerful but slower reranker that uses reasoning and test-time compute for nuanced relevance judgments.
+
+![](p3-images/slide_33.png)
+
+*([Timestamp: 00:08:17](https://youtu.be/YB3b-wPbSH8?t=497s))*
+
+First, we will dive into Promptriever. The associated paper's title is "Instruction-Trained Retrievers Can Be Prompted Like Language Models," a collaboration between Johns Hopkins and Samaya AI.
+
+![](p3-images/slide_34.png)
+
+*([Timestamp: 00:08:23](https://youtu.be/YB3b-wPbSH8?t=503s))*
+
+Orion explains the two main retrieval architectures. A **Bi-Encoder** (dense retriever) creates separate query and document embeddings for fast comparison, making it highly scalable. A **Cross-Encoder** (reranker) processes the query and document together for deeper interaction at a higher computational cost. Promptriever is a bi-encoder.
+
+![](p3-images/slide_36.png)
+
+*([Timestamp: 00:09:10](https://youtu.be/YB3b-wPbSH8?t=550s))*
+
+The main research question was how to enable fast, scalable bi-encoders to understand complex instructions.
+
+The missing ingredient was **training data**. Existing retrieval datasets like MSMARCO lack instructions because users don't type them into traditional search engines. Creating a new dataset with instruction-based queries was necessary to teach the model this capability.
+
+![](p3-images/slide_39.png)
+
+*([Timestamp: 00:10:07](https://youtu.be/YB3b-wPbSH8?t=607s))*
+
+This slide illustrates the process of generating the training data, starting with a standard query. The process uses an existing query-document pair from a standard dataset.
+
+The core of the data generation is to use a LLM to look at the query and the relevant document and synthetically generate a detailed **instruction** that makes the relevance criteria more specific. A crucial part of this process was also generating **instruction negatives**, which are documents that are relevant to the query but irrelevant to the *instruction*, forcing the model to pay attention to the new constraints.
+
+![](p3-images/slide_42.png)
+
+*([Timestamp: 00:10:36](https://youtu.be/YB3b-wPbSH8?t=636s))*
+
+To ensure a fair comparison, they started with the training recipe from **RepLLaMA**, an existing model that fine-tunes LLaMA-2 for retrieval, and only added their new instruction-based training data.The evaluation was comprehensive, testing on in-domain data (MSMARCO), new instruction-following datasets, and out-of-domain datasets to measure generalization.
+
+![](p3-images/slide_43.png)
+
+*([Timestamp: 00:11:20](https://youtu.be/YB3b-wPbSH8?t=680s))*
+
+This slide introduces the two key instruction-following datasets for evaluation.
+
+![](p3-images/slide_44.png)
+
+*([Timestamp: 00:11:22](https://youtu.be/YB3b-wPbSH8?t=682s))*
+
+The first is **FollowIR**, where queries are modified with clarifying instructions. The p-MRR metric measures the ability to adapt, with positive scores indicating successful instruction following.
+
+![](p3-images/slide_45.png)
+
+*([Timestamp: 00:12:14](https://youtu.be/YB3b-wPbSH8?t=734s))*
+
+The second is **InstructIR**, which associates queries with user personas (e.g., student, professional). The model must understand the persona's implicit needs to retrieve appropriate documents.
+
+![](p3-images/slide_46.png)
+
+*([Timestamp: 00:12:30](https://youtu.be/YB3b-wPbSH8?t=750s))*
+
+This slide introduces the experiment results.
+
+![](p3-images/slide_48.png)
+
+*([Timestamp: 00:12:36](https://youtu.be/YB3b-wPbSH8?t=756s))*
+
+On FollowIR, the baseline RepLLaMA (and all prior embedding models) scored negatively, performing *worse* when given an instruction. Promptriever is the first to achieve a positive score, demonstrating that bi-encoders can learn to follow instructions.
+
+![](p3-images/slide_49.png)
+
+*([Timestamp: 00:12:50](https://youtu.be/YB3b-wPbSH8?t=770s))*
+
+On InstructIR, Promptriever again significantly outperforms the baseline by understanding the nuanced needs of different user personas.
+
+![](p3-images/slide_56.png)
+
+*([Timestamp: 00:12:59](https://youtu.be/YB3b-wPbSH8?t=779s))*
+
+How do these models perform on standard datasets without pre-defined instructions?
+
+When evaluating on standard data, what prompt should be used?
+
+The first option is using no prompt, the standard for evaluating existing retrieval models.
+
+The second option, unique to instruction-following models, is to experiment with generic prompts (e.g., "Find the most relevant document") and use the best-performing one, a form of prompt engineering for retrieval.
+
+This slide shows generic prompts created to encourage more careful retrieval, such as "Be careful when assigning relevance as your job is on the line."
+
+![](p3-images/slide_57.png)
+
+*([Timestamp: 00:13:58](https://youtu.be/YB3b-wPbSH8?t=838s))*
+
+This slide introduces the BEIR benchmark for out-of-domain (OOD) generalization.
+
+Without a prompt, Promptriever performs comparably to the RepLLaMA baseline, showing that instruction-following capabilities don't hurt performance on traditional tasks.
+
+![](p3-images/slide_58.png)
+
+*([Timestamp: 00:14:13](https://youtu.be/YB3b-wPbSH8?t=853s))*
+
+When a generic instruction is added, Promptriever's performance increases significantly, while the baseline's degrades slightly. This demonstrates that Promptriever's retrieval strategy can be controlled with natural language.
+
+The [Promptriever paper](https://arxiv.org/abs/2409.11136) calls this **zero-shot hyperparameter optimization via prompting**. Instead of tweaking numerical settings like a relevance threshold, one can change the model's behavior by tweaking the natural language prompt. An instruction like "find documents with high recall" causes the model to adjust its internal strategy to retrieve a broader set of results because it has been trained to understand the *intent* behind such commands.
+
+![](p3-images/slide_60.png)
+
+*([Timestamp: 00:14:45](https://youtu.be/YB3b-wPbSH8?t=885s))*
+
+To test if the model understands the *meaning* of prompts, they measured the standard deviation of performance across 10 paraphrased versions of the same prompt. Promptriever shows much lower variance than keyword-based (BM25) or standard semantic models (RepLLaMA). This indicates it is robust to wording changes and understands the underlying intent, rather than just matching keywords.
+
+![](p3-images/slide_64.png)
+
+*([Timestamp: 00:15:16](https://youtu.be/YB3b-wPbSH8?t=916s))*
+
+This slide summarizes takeaways from the Promptriever research:
+
+1. With the right training data, even fast bi-encoder retrievers can be made promptable like larger LLMs.
+2. This unlocks new types of queries based on meta-level properties like style, sentiment, or logical constraints.
+3. Users no longer need to be picky about keywords; they can tell the model what they want in natural language.
+
+![](p3-images/slide_67.png)
+
+*([Timestamp: 00:16:08](https://youtu.be/YB3b-wPbSH8?t=968s))*
+
+The focus now shifts to Rank1, the reasoning-based model. The associated paper's title is "Rank1: Test-Time Compute for Information Retrieval," highlighting its focus on reasoning in the reranking stage.
+
+![](p3-images/slide_68.png)
+
+*([Timestamp: 00:16:13](https://youtu.be/YB3b-wPbSH8?t=973s))*
+
+Rank1 is a **Cross-Encoder**, processing the query and document together for a powerful but slower relevance judgment.
+
+![](p3-images/slide_69.png)
+
+*([Timestamp: 00:16:22](https://youtu.be/YB3b-wPbSH8?t=982s))*
+
+Rank1 leverages **Test-Time Compute**, where the model generates a reasoning trace to arrive at its decision.
+
+![](p3-images/slide_70.png)
+
+*([Timestamp: 00:16:25](https://youtu.be/YB3b-wPbSH8?t=985s))*
+
+The chart on the right (from OpenAI's o1 model) shows that as you increase the amount of computation (reasoning chain length), model accuracy on complex tasks increases dramatically.
+
+![](p3-images/slide_73.png)
+
+*([Timestamp: 00:17:08](https://youtu.be/YB3b-wPbSH8?t=1028s))*
+
+This slide shows what the reasoning process looks like in information retrieval. Given a query and a document, the model is asked to determine relevance. The model generates a detailed reasoning trace, identifying key phrases, analyzing the relationship between query and document, and questioning its own interpretations ("But wait..."). It uses this step-by-step reasoning to arrive at a final `false` judgment.
+
+![](p3-images/slide_74.png)
+
+*([Timestamp: 00:18:01](https://youtu.be/YB3b-wPbSH8?t=1081s))*
+
+The talk now moves to the evaluation data for Rank1.
+
+![](p3-images/slide_75.png)
+
+*([Timestamp: 00:18:06](https://youtu.be/YB3b-wPbSH8?t=1086s))*
+
+The primary evaluation dataset is **BRIGHT**, designed to test deep reasoning with unique relevance definitions that go beyond topic matching, such as finding a math problem that uses the same theorem.
+
+![](p3-images/slide_76.png)
+
+*([Timestamp: 00:18:50](https://youtu.be/YB3b-wPbSH8?t=1130s))*
+
+This slide shows Rank1's reasoning on a LeetCode problem. Asked to find a similar problem, it correctly identifies the core "two-pointer approach" algorithm in the provided document and recognizes that the candidate document also uses the same technique, demonstrating a deep, algorithmic level of understanding.
+
+![](p3-images/slide_77.png)
+
+*([Timestamp: 00:19:35](https://youtu.be/YB3b-wPbSH8?t=1175s))*
+
+This slide introduces the Rank1 experiment results.
+
+![](p3-images/slide_80.png)
+
+*([Timestamp: 00:19:38](https://youtu.be/YB3b-wPbSH8?t=1178s))*
+
+The evaluation covers tasks testing reasoning (BRIGHT), negation (NevIR), and instruction following (mFollowIR). The baseline model, RankLLaMA, was trained on **10 times more data** than Rank1. Despite being trained on far less data, Rank1 nearly doubles the performance of the baseline on the BRIGHT reasoning benchmark.
+
+![](p3-images/slide_81.png)
+
+*([Timestamp: 00:20:00](https://youtu.be/YB3b-wPbSH8?t=1200s))*
+
+On the NevIR negation task, the gain is even more dramatic, with Rank1 more than doubling the baseline's score.
+
+![](p3-images/slide_82.png)
+
+*([Timestamp: 00:20:05](https://youtu.be/YB3b-wPbSH8?t=1205s))*
+
+The trend continues on the mFollowIR instruction-following task, where Rank1 again more than doubles the baseline's performance.
+
+![](p3-images/slide_84.png)
+
+*([Timestamp: 00:20:16](https://youtu.be/YB3b-wPbSH8?t=1216s))*
+
+To isolate the impact of the reasoning chain, they compared training the same model on the same data, with and without the "thinking" part of the training examples. The results show that training the model to generate the reasoning chain leads to a massive 10-point gain in performance. The act of "thinking" itself unlocks these advanced capabilities.
+
+![](p3-images/slide_85.png)
+
+*([Timestamp: 00:20:33](https://youtu.be/YB3b-wPbSH8?t=1233s))*
+
+Orion shares a story about evaluating on older, widely-used datasets.
+
+![](p3-images/slide_87.png)
+
+*([Timestamp: 00:20:44](https://youtu.be/YB3b-wPbSH8?t=1244s))*
+
+They were surprised by low scores on the DL19/DL20 datasets, discovering their model was finding many documents that had never been judged by human annotators because older systems had never retrieved them. Initial scores showed Rank1 performing worse than expected, below models like RankLLaMA and MonoT5.
+
+![](p3-images/slide_89.png)
+
+*([Timestamp: 00:21:31](https://youtu.be/YB3b-wPbSH8?t=1291s))*
+
+The research team manually re-judged all previously unjudged documents retrieved by their models. After re-judging, Rank1's score increased significantly, making it the top-performing model.
+
+![](p3-images/slide_91.png)
+
+*([Timestamp: 00:21:39](https://youtu.be/YB3b-wPbSH8?t=1299s))*
+
+Reasoning-based models are not just improving scores on old benchmarks; they are **finding new, relevant documents** that previous systems missed. This also suggests the IR community should move on from older evaluation datasets (DL19 was created before BERT) as they may not be equipped to measure modern model capabilities.
+
+![](p3-images/slide_95.png)
+
+*([Timestamp: 00:22:05](https://youtu.be/YB3b-wPbSH8?t=1325s))*
+
+The takeaway is that test-time compute (reasoning) allows for creating promptable and reasoning rerankers using simple supervised fine-tuning, without complex reinforcement learning. These reasoning rerankers are slower than traditional methods but vastly more powerful. The performance gains shown were achieved by training only on general web data. Fine-tuning on in-domain data would likely unlock more significant improvements.
+
+![](p3-images/slide_96.png)
+
+*([Timestamp: 00:22:33](https://youtu.be/YB3b-wPbSH8?t=1353s))*
+
+This slide recaps the two models: Promptriever is fast, while Rank1 is strong but slow.
+
+![](p3-images/slide_97.png)
+
+*([Timestamp: 00:22:37](https://youtu.be/YB3b-wPbSH8?t=1357s))*
+
+Orion concludes that the overall goal is to create IR systems that work like LLMs, capable of handling queries that combine topic, style, and behavioral instructions.
+
+![](p3-images/slide_101.png)
+
+*([Timestamp: 00:22:56](https://youtu.be/YB3b-wPbSH8?t=1376s))*
+
+What are the practical implications? New retrievers can directly benefit from rapid LLM advancements. As LLMs get better at reasoning and instruction following, so will the retrieval systems built upon them. This enables instruction-based search, meaning any query a user can type, no matter how complex, can be understood and executed by the search system.
+
+Orion concludes by emphasizing that all models and data from his research are open-source and available.
+
+* * *
+
+## Q&A Session
+
+*   **How is Promptriever operationalized for queries vs. documents?**
+    *   *([Timestamp: 23:45](https://youtu.be/YB3b-wPbSH8?t=1425s))* The instruction is only applied to the query at inference time. The documents are pre-processed into embeddings without any instruction. This way, you can batch-process your entire corpus once, and then at query time, you append the user's instruction to their query to generate a single, instruction-aware query embedding for the search.
+
+*   **Can this instruction-based approach be used for cross-encoders (rerankers) too?**
+    *   *([Timestamp: 26:04](https://youtu.be/YB3b-wPbSH8?t=1564s))* Yes, absolutely. Orion mentions they have other work that explores this, and the concepts are applicable to rerankers as well. The [paper for the FollowIR benchmark](https://arxiv.org/abs/2403.15246), for example, includes work on instruction-based rerankers.
+
+*   **Who provides the meta-instructions for search? Humans or LLMs?**
+    *   *([Timestamp: 26:32](https://youtu.be/YB3b-wPbSH8?t=1592s))* Both are possible and interesting. For a "deep research" system, an LLM agent could generate precise, detailed instructions to guide the retrieval process. For end-user applications, a "power user" could type in these complex instructions directly to get more fine-grained control over their search results.
+
+*   **How does Rank1 compare to frontier reasoning models like OpenAI's?**
+    *   *([Timestamp: 28:04](https://youtu.be/YB3b-wPbSH8?t=1684s))* There is still a performance gap. On some benchmarks, a model like OpenAI's `o3` might score around 75, while the 7B parameter Rank1 model scores around 69. However, Rank1 is significantly smaller (7B vs. a much larger frontier model), faster, and fully open-source, making it ideal for applications with private data or where cost and latency are concerns.
+
+*   **How easy is it to train Rank1 on a custom dataset?**
+    *   *([Timestamp: 30:30](https://youtu.be/YB3b-wPbSH8?t=1830s))* It's surprisingly easy. The training process uses a standard supervised fine-tuning approach (predict-the-next-token loss) on reasoning traces. The [Rank1 paper](https://arxiv.org/abs/2502.18418) notes that the model generalizes remarkably well even without in-domain training, but fine-tuning on a specific dataset is straightforward and would likely lead to large performance gains.
+
+*   **Why does supervised fine-tuning (SFT) work for a reasoning model instead of reinforcement learning (RL)?**
+    *   *([Timestamp: 31:32](https://youtu.be/YB3b-wPbSH8?t=1892s))* The model learns to reason effectively through **distillation**, a process where it is trained on the reasoning chains generated by a more powerful model (in this case, Deepseek's R1). By learning to mimic the step-by-step "thought process" of the stronger model, it acquires reasoning abilities using a simple and stable supervised fine-tuning objective. This is so effective that it removes the need for more complex RL techniques. Orion speculates this is why major companies have stopped exposing the full reasoning chains of their models, since they are incredibly valuable as training data.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Video
+
+Here is the full video:
+
+{{< video https://youtu.be/YB3b-wPbSH8 >}}
+
+</example-3>
+<example-5>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p4_late_interaction.qmd
+
+Markdown Content:
+---
+title: "P4: Late Interaction Models For RAG"
+description: "Antoine Chaffin from LightOn on late interaction models for RAG, featuring ModernBERT and PyLate."
+image: p4-images/slide_13.png
+page-navigation: true
+order: 5
+date: 2025-07-11
+---
+
+As part of our [LLM Evals course](https://bit.ly/evals-ai), I hosted [Antoine Chaffin](https://twitter.com/antoine_chaffin), a researcher at LightOn, for the fourth part of our 5-part mini-series on evaluating and optimizing RAG. Antoine is a research engineer who has contributed to impactful open-source tools like [ModernBERT](https://huggingface.co/blog/modernbert) and [PyLate](https://github.com/lightonai/pylate), a library for working with late-interaction models.
+
+His talk explains the intrinsic limitations of single-vector search, such as information loss from pooling, and introduces late interaction models as a more powerful alternative for modern RAG use cases like out-of-domain generalization and long context retrieval.
+
+Below is an annotated version of the presentation, with timestamped links for each slide.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Annotated Presentation
+
+![](p4-images/slide_1.png)
+
+*([Timestamp: 00:00:05](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=5s))*
+
+The title slide for Antoine's talk, "Going Further: Late Interaction Beats Single Vector Limits."
+
+![](p4-images/slide_2.png)
+
+*([Timestamp: 00:00:32](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=32s))*
+
+Antoine introduces himself, highlighting his background as an R&D engineer at LightOn with a Ph.D. in multimodal misinformation detection. His work focuses on information retrieval, especially with encoders and late interaction models, which led to his co-creation of ModernBERT and the PyLate library. He also mentions his work on OCR-free RAG pipelines and his active presence on Twitter, where he discusses these topics.
+
+![](p4-images/slide_3.png)
+
+*([Timestamp: 00:01:40](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=100s))*
+
+This slide diagrams the standard architecture for dense (single) vector search. A query and a document are separately fed through an encoder model (like BERT) to generate contextualized vector representations for each token. A pooling operation (e.g., max, mean,[CLS] token, etc.) then compresses all these token vectors into a single vector for the query and a single vector for the document. Finally, a similarity score (typically cosine similarity) is computed between these two vectors to determine relevance. The information loss in the pooling step is a key limitation of this approach.
+
+![](p4-images/slide_4.png)
+
+*([Timestamp: 00:03:07](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=187s))*
+
+Dense vector search has become the standard for RAG pipelines for several reasons. It offers strong out-of-the-box performance, and a vast number of pre-trained models are available on platforms like the Hugging Face Hub, catering to different sizes, languages, and domains. Furthermore, these models are easy to deploy using the growing ecosystem of vector databases and serving APIs.
+
+![](p4-images/slide_5.png)
+
+*([Timestamp: 00:03:54](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=234s))*
+
+Performance evaluation is crucial for selecting the right model. The MTEB (Massive Text Embedding Benchmark) leaderboard is a valuable resource that centralizes results from various benchmarks, allowing practitioners to compare models and choose one that fits their budget and domain requirements.
+
+![](p4-images/slide_6.png)
+
+*([Timestamp: 00:04:17](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=257s))*
+
+Antoine uses the BEIR benchmark as an example of Goodhart's Law in action. BEIR was introduced to evaluate the out-of-domain generalization of retrieval models. However, as it became the standard benchmark to beat, models began to overfit to its specific datasets. Consequently, top-performing models on the BEIR leaderboard may not generalize well to new, unseen use cases, underscoring the importance of running your own evaluations on your specific data.
+
+![](p4-images/slide_7.png)
+
+*([Timestamp: 00:05:36](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=336s))*
+
+Antoine argues that if you cannot measure a capability, you cannot improve it. Existing benchmarks often miss important aspects of model performance. For instance, most older models were evaluated with a context window of only 512 tokens. While many newer models claim to support 8k tokens, recent evaluations have shown that their performance degrades significantly beyond 4k, a limitation that was not captured by older benchmarks.
+
+![](p4-images/slide_8.png)
+
+*([Timestamp: 00:06:24](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=384s))*
+
+This table from the LongEmbed paper illustrates the performance of various embedding models on long-context retrieval tasks. It shows that extending models with techniques like SelfExtend or NTK can significantly improve their ability to handle long contexts, with the E5-Mistral + NTK model achieving the highest average score.
+
+![](p4-images/slide_9.png)
+
+*([Timestamp: 00:06:33](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=393s))*
+
+Retrieval goes beyond simple keyword or semantic matching. Modern RAG systems require more complex, reasoning-based retrieval. For example, a query asking for a different Snowflake function than `UNPIVOT` requires understanding the function's purpose, not just matching keywords. Similarly, a math question might require retrieving a document that uses the same theorem, even if the numbers are different. These tasks are challenging for current models.
+
+![](p4-images/slide_10.png)
+
+*([Timestamp: 00:07:27](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=447s))*
+
+This table shows the performance of various retrieval models on the BRIGHT benchmark, which is designed for reasoning-intensive tasks. The results show that even large, powerful models struggle, with the best model achieving an average nDCG@10 of only 24.3. This highlights the difficulty of reasoning-based retrieval for current systems.
+
+![](p4-images/slide_11.png)
+
+*([Timestamp: 00:07:50](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=470s))*
+
+Interestingly, BM25, a simple lexical search method that does not use deep learning, performs surprisingly well on these more challenging long-context and reasoning-intensive benchmarks. Its strength lies in its lack of compression; by matching exact keywords, it avoids the information loss that plagues dense models, making it a robust baseline for out-of-domain tasks.
+
+![](p4-images/slide_12.png)
+
+*([Timestamp: 00:08:24](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=504s))*
+
+Pooling is the core flaw of dense models. The process of compressing all the token vectors from a document into a single vector is inherently lossy. This compression forces the model to be selective about what information it retains.
+
+![](p4-images/slide_13.png)
+
+*([Timestamp: 00:08:41](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=521s))*
+
+This slide illustrates how dense models learn selective information encoding. If a model is trained on a movie review dataset where queries are mostly about actors, it will learn to prioritize and encode information about actors while discarding details about the plot, music, or themes. This selective behavior leads to poor performance on out-of-domain queries (e.g., asking about the plot) or when applied to new domains entirely (e.g., cooking recipes), where the learned notion of similarity is no longer relevant.
+
+![](p4-images/slide_14.png)
+
+*([Timestamp: 00:10:42](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=642s))*
+
+BM25 is effective in certain cases because it avoids pooling and compression, relying on exact keyword matching. In the example, "Leonardo DiCaprio disaster" in the query directly matches the terms in the document. However, this approach fails when there's no direct lexical overlap, such as with synonyms or different languages.
+
+![](p4-images/slide_15.png)
+
+*([Timestamp: 00:11:32](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=692s))*
+
+Late interaction models offer a solution by replacing the pooling step. Instead of compressing token vectors into a single one, they keep all the token-level information. A token-level similarity operator, such as MaxSim, is then used to compute the final score. MaxSim works by finding the maximum similarity between each query token and all document tokens, then summing these maximum scores.
+
+![](p4-images/slide_16.png)
+
+*([Timestamp: 00:12:17](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=737s))*
+
+This meme challenges the idea that using a bigger single vector can solve the information compression problem. While a larger vector can hold more information, it doesn't address the fundamental issue of conflicting signals when multiple distinct concepts are forced into one representation.
+
+![](p4-images/slide_17.png)
+
+*([Timestamp: 00:12:27](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=747s))*
+
+This slide provides a clear comparison between dense and late-interaction models. A dense model forces different concepts (e.g., actors and plot) into a single, conflicted representation. In contrast, a late-interaction model maintains separate token-level representations. The MaxSim operator can then match a query about actors to the specific actor tokens and a query about the plot to the plot tokens, resulting in clean, uninterrupted signals for each aspect of the document.
+
+![](p4-images/slide_18.png)
+
+*([Timestamp: 00:13:51](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=831s))*
+
+Late-interaction models like ColBERT have demonstrated strong out-of-domain performance, even outperforming in-domain dense models. Antoine emphasizes that because "out-of-domain" is hard to define, the best approach is to test these models on your own specific data to see the benefits.
+
+![](p4-images/slide_19.png)
+
+*([Timestamp: 00:15:04](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=904s))*
+
+The GTE-ModernColBERT model, which uses late interaction, achieves state-of-the-art results on the LongEmbed benchmark. Notably, it outperforms other models by a large margin, even though it was trained on documents with a maximum length of only 300 tokens, while the base models it's compared against were trained with an 8k context window. This highlights its impressive generalization capabilities for long-context retrieval.
+
+![](p4-images/slide_20.png)
+
+*([Timestamp: 00:15:52](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=952s))*
+
+On the reasoning-intensive BRIGHT benchmark, the 150M-parameter Reason-ModernColBERT outperforms all 7B-parameter models (which are 45 times larger). It is even competitive with the proprietary ReasonIR-8B model, which was trained on the same data. This demonstrates the power of the late-interaction architecture for complex retrieval tasks.
+
+![](p4-images/slide_21.png)
+
+*([Timestamp: 00:16:30](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=990s))*
+
+This slide provides a direct, apples-to-apples comparison on the BRIGHT benchmark. A late-interaction model achieves a mean score of 19.61, while a dense (single vector) model with the same backbone and training data scores only 12.31. This significant gap underscores the effectiveness of late interaction for challenging, reasoning-intensive retrieval.
+
+![](p4-images/slide_22.png)
+
+*([Timestamp: 00:16:48](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1008s))*
+
+Interpretability is a valuable bonus of late-interaction models like ColBERT. Because the MaxSim operator performs granular, token-level matching, it's possible to see exactly which parts of a document contributed to the match. This allows you to identify the specific sub-chunk of text that is most relevant, which is useful for debugging and for providing more precise context to an LLM in a RAG pipeline.
+
+![](p4-images/slide_23.png)
+
+*([Timestamp: 00:17:42](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1062s))*
+
+Despite their advantages, dense models are still mainstream. Antoine attributes this to three main factors:
+
+1.  **Storing cost:** Storing n token vectors instead of one is more expensive, though techniques like quantization and footprint reduction are making this more manageable.
+2.  **VectorDB support:** Initially, most vector databases did not support the different search mechanism required by late-interaction models. However, this is changing, with major providers like Vespa, Weaviate, and LanceDB now offering support.
+3.  **Lack of accessible tools:** The widespread availability of libraries like Sentence Transformers made it very easy to work with dense models.
+
+![](p4-images/slide_24.png)
+
+*([Timestamp: 00:18:43](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1123s))*
+
+To address the lack of accessible tools, Antoine and his collaborators created **PyLate**, a library that extends the popular Sentence Transformers framework for multi-vector models. Since late interaction is essentially a dense model without pooling and with a MaxSim operator, PyLate can leverage the existing Sentence Transformers ecosystem. This allows for efficient, monitorable training (multi-GPU, FP/BF16, W&B) and support for all base models.
+
+![](p4-images/slide_25.png)
+
+*([Timestamp: 00:19:43](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1183s))*
+
+PyLate is well-integrated with the Hugging Face ecosystem. This allows for easy sharing of models on the Hub and includes features like automatic model card creation, making it simple to document and distribute your trained late-interaction models.
+
+![](p4-images/slide_26.png)
+
+*([Timestamp: 00:20:08](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1208s))*
+
+The syntax for training models with PyLate is designed to be very similar to Sentence Transformers. This familiarity makes it easy for developers to adapt their existing boilerplates and workflows. The example code shows how to define a model, load a dataset, configure training arguments, and start training with just a few modifications to a standard Sentence Transformers script.
+
+![](p4-images/slide_27.png)
+
+*([Timestamp: 00:21:28](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1288s))*
+
+PyLate is not just for training; it also provides tools for evaluation. It includes a built-in, efficient index based on PLAID for fast retrieval. It also has helper functions that use the `ranx` library to easily compute standard IR metrics (like NDCG and Recall) on the retrieval output. The system is compatible with standard data formats (e.g., MTEB, BEIR), so you can evaluate on existing benchmarks or your own data.
+
+![](p4-images/slide_28.png)
+
+*([Timestamp: 00:22:49](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1369s))*
+
+One future research avenue is to reduce the storage cost of multi-vector models. Techniques like hierarchical pooling and quantization are being explored to find the optimal trade-off between index size and performance. The goal is to make the footprint of multi-vector indexes comparable to that of single-vector representations without sacrificing much performance.
+
+![](p4-images/slide_29.png)
+
+*([Timestamp: 00:23:34](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1414s))*
+
+Another promising direction is applying late interaction to other modalities beyond text. Approaches like ColPali have already used ColBERT for OCR-free RAG with text and images. The diagram shows the CLaMR model, which uses late interaction for multimodal content retrieval across video, audio, OCR, and metadata, consistently outperforming single-vector approaches.
+
+![](p4-images/slide_30.png)
+
+*([Timestamp: 00:24:21](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1461s))*
+
+The final future avenue is to develop better similarity functions. While the MaxSim operator is effective and has nice properties, it is relatively naive. Research into learnable late interaction functions, as shown in the paper "Efficient Document Ranking with Learnable Late Interactions" from Google, presents an opportunity to further improve the performance of these models.
+
+![](p4-images/slide_31.png)
+
+*([Timestamp: 00:24:36](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1476s))*
+
+Antoine concludes by summarizing the key takeaways. Late interaction models overcome the intrinsic limitations of single-vector search and are well-suited for modern, real-world use cases (out-of-domain, long context, reasoning-intensive). With growing ecosystem support and tools like PyLate, it's easier than ever to experiment with these models. He encourages the audience to try existing models on their own data and to train their own specialized models using the provided resources.
+
+---
+
+## Q&A Session
+
+*   **([25:52](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1552s)) Why aren't late-interaction models mainstream yet, given their advantages?**
+    Antoine believes it's still early days. The tools and VectorDB support have only recently matured. It takes time for new technologies to be adopted, especially when it requires changes to production systems. He notes that many use cases don't require scaling to millions of documents, and for those that do, modern indexes make it feasible. As more models become available for different languages and domains, he expects adoption to grow. Regarding latency, while late-interaction might be slightly slower, the performance gains often outweigh the minor latency increase, which is often not the bottleneck in complex RAG pipelines.
+
+*   **([31:04](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=1864s)) If you fine-tune both a dense vector model and a late-interaction model on the same in-domain data, does the performance gap still hold?**
+    Yes, the performance gap still exists, even in-domain. Antoine points to the comparison on the BRIGHT benchmark, where a late-interaction model significantly outperformed a single-vector model with the same backbone and training data. He also suggests that fine-tuning a late-interaction model is easier and more stable because there's less risk of the model's knowledge "collapsing" onto the new training distribution, as the updates are more granular.
+
+*   **([33:20](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=2000s)) How easy is it to get started and fine-tune with PyLate? Are there any tips?**
+    It's very straightforward, especially for those familiar with Sentence Transformers. The boilerplate code is nearly identical. Antoine recommends using the in-training evaluation feature to monitor performance, which is particularly helpful when sweeping hyperparameters. He also mentioned that the training process is generally more stable and converges faster than with single-vector models. The PyLate documentation and repository contain boilerplates and more detailed guidance.
+
+*   **([34:22](https://youtu.be/1x3k0V2IITo?si=CHjla5PUkMAec-jl&t=2062s)) What are some common mistakes or points of confusion for people moving from single-vector to late-interaction models?**
+    Antoine hasn't seen many major pitfalls. He says if you can train a single-vector model, you can train a late-interaction model with PyLate. The common advice still applies: tune the temperature for contrastive loss, use a large batch size, etc. The documentation covers most of these common issues, and he encourages users to open issues or reach out on Twitter for help.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Video
+
+Here is the full video:
+
+{{< video https://youtu.be/1x3k0V2IITo >}}
+
+</example-4>
+<example-6>
+Title: 
+
+URL Source: https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p5_map.qmd
+
+Markdown Content:
+---
+title: "P5: RAG with Multiple Representations"
+description: "Building flexible retrieval systems with multiple representations."
+image: p5-images/slide_2.png
+order: 6
+date: 2025-07-11
+---
+
+As part of our [LLM Evals course](https://bit.ly/evals-ai){target="_blank"}, I hosted [Bryan Bischof](https://www.linkedin.com/in/bryan-bischof/){target="_blank"} and [Ayush Chaurasia](https://www.linkedin.com/in/ayushchaurasia){target="_blank"} for the final part of our 5-part mini-series on evaluating and optimizing RAG. They argued that effective retrieval lies not in finding a single, perfect data representation, but in creating and leveraging multiple, diverse representations with a router to better serve user intent, a concept they demonstrate with semantic dot art.
+
+Below is an annotated version of their presentation, with timestamped links for each slide.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Annotated Presentation
+
+### The Map is Not the Territory
+
+![](p5-images/slide_1.png)
+
+*([Timestamp: 01:00](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=60s){target="_blank"})*
+
+The presentation's central theme is that a "map" (a data representation) is not the same as the "territory" (the real-world data). In machine learning, this distinction is an advantage. Models and embeddings are our maps, and we can create many different maps of the same territory to serve different purposes.
+
+### Deconstructing RAG Buzzwords
+
+The RAG landscape is filled with terms that can obscure fundamental principles. These terms can be deconstructed into simpler concepts.
+
+![](p5-images/slide_3.png)
+
+*([Timestamp: 02:37](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=157s){target="_blank"})*
+
+**Naive RAG** is better understood as **Simple RAG**: the foundational approach of searching a vector store with a vector to find similar items.
+
+![](p5-images/slide_4.png)
+
+*([Timestamp: 04:04](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=244s){target="_blank"})*
+
+**Agentic RAG** involves an LLM choosing *how* to search, giving the impression that the model can remove the engineer from designing the retrieval pipeline.
+
+![](p5-images/slide_5.png)
+
+*([Timestamp: 04:41](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=281s){target="_blank"})*
+
+**Hybrid RAG** combines Simple RAG with classic retrieval techniques like keyword matching, allowing for searches with multiple signals simultaneously.
+
+![](p5-images/slide_6.png)
+
+*([Timestamp: 05:05](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=305s){target="_blank"})*
+
+**Graph RAG** uses the relationships *between* objects to improve retrieval, such as identifying stores that sell "home goods" to find a coffee filter, also considering proximity.
+
+![](p5-images/slide_7.png)
+
+*([Timestamp: 06:06](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=366s){target="_blank"})*
+
+**Multi-Modal RAG** has two meanings: searching with multiple data types (text and images) or searching across multiple locations ("modes") within the same latent space for a single item.
+
+![](p5-images/slide_8.png)
+
+*([Timestamp: 06:45](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=405s){target="_blank"})*
+
+All these techniques are different approaches to the same problem and could have been invented from first principles.
+
+### A First-Principles View of RAG
+
+Advanced RAG techniques can be reframed as core engineering pipelines.
+
+![](p5-images/slide_10.png)
+
+*([Timestamp: 07:58](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=478s){target="_blank"})*
+
+**Hypothetical Document Embeddings (HyDE)** is a **document enrichment pipeline**. It uses an LLM to rewrite documents into the language that users are likely to search with. A dense, technical document can be rewritten into a simpler description, creating a new, more searchable "map" of the original.
+
+![](p5-images/slide_11.png)
+
+*([Timestamp: 10:14](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=614s){target="_blank"})*
+
+**Agentic RAG** is a **query enrichment pipeline**. When a query is ambiguous, an agent decides how to search. For example, it determines whether "V60 filter" refers to a product or a restaurant, routing the query to the correct search process.
+
+![](p5-images/slide_12.png)
+
+*([Timestamp: 11:38](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=698s){target="_blank"})*
+
+**Rank fusion** is **multi-stage processing**. It involves running multiple different searches and then combining, or "stitching," the results together in a subsequent stage.
+
+### The Three Responsibilities of an IR Engineer
+
+These advanced techniques can be derived by focusing on three core responsibilities.
+
+![](p5-images/slide_14.png)
+
+*([Timestamp: 12:43](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=763s){target="_blank"})*
+
+1.  **Predict user intent:** What is the most likely representation of what the user is looking for?
+
+![](p5-images/slide_15.png)
+
+*([Timestamp: 13:08](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=788s){target="_blank"})*
+
+2.  **Generate multiple representations (maps):** Create different views of the source data ahead of time (document enrichment).
+
+![](p5-images/slide_16.png)
+
+*([Timestamp: 13:39](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=819s){target="_blank"})*
+
+3.  **Match intent to representation:** Correctly match the user's query with the appropriate pre-generated representation.
+
+### Practical Application: Curving Space
+
+"Curving space" means shaping data representations and indices to improve search.
+
+![](p5-images/slide_18.png)
+
+*([Timestamp: 13:58](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=838s){target="_blank"})*
+
+For financial documents, one could create multiple "maps" from a single corpus, such as summaries, tables of data, lists of named entities, and form types. This is document enrichment.
+
+![](p5-images/slide_19.png)
+
+*([Timestamp: 16:34](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=994s){target="_blank"})*
+
+Once multiple representations exist, the right indexing strategy must be chosen for each. This involves deciding between semantic search, keyword matching, pre-filters, and whether to use a single index or separate ones.
+
+![](p5-images/slide_20.png)
+
+*([Timestamp: 18:08](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1088s){target="_blank"})*
+
+Sometimes, a second retrieval step, informed by the first, is required. This is a form of staged processing.
+
+### Agents as Routers
+
+![](p5-images/slide_22.png)
+
+*([Timestamp: 18:54](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1134s){target="_blank"})*
+
+Agents are **transformers** in their function: they transform incoming data and instructions into a structured output.
+
+![](p5-images/slide_23.png)
+
+*([Timestamp: 19:04](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1144s){target="_blank"})*
+
+An effective way to use agents is as **routers**. They take incoming data and route it to different indices or subsequent retrieval stages. This is the core idea behind both Agentic RAG and Multi-Agent RAG.
+
+### Representations Must Evolve
+
+![](p5-images/slide_25.png)
+
+*([Timestamp: 20:51](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1251s){target="_blank"})*
+
+A significant danger in RAG is that documents are dynamic. A static embedding will become outdated as the context of a document changes based on new business or world events.
+
+![](p5-images/slide_26.png)
+
+*([Timestamp: 22:49](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1369s){target="_blank"})*
+
+The solution is to design a system that can detect what has changed and re-index only those parts, requiring an architecture built for dynamic updates.
+
+### Demo: Semantic Dot Art
+
+*([Timestamp: 23:21](https://youtu.be/hf9B3knU9vc?t=1401s){target="_blank"})*
+
+To make these concepts concrete, Ayush Chaurasia demonstrated `semanticdotart`, an application for discovering artworks. The demo shows how a system can serve diverse user intents by creating and searching over multiple representations of the same underlying data.
+
+![](p5-images/2025-07-11-21-24-09.png)
+
+A user can search for art using different "maps" of the data. For example, they can search with a literal description ("multiple clocks melting in a desert"), a poetic description, or even a similar image. The system retrieves not only the original artwork but also derivative pieces and other thematically related works. This is made possible by a rich document enrichment pipeline that creates multiple vector and keyword-based indices for each artwork, capturing everything from mood and style to literal object descriptions.
+
+The retrieval process is agentic. The system routes the user's query to the most appropriate index or combination of indices. A poetic query might be routed to an index of artistic descriptions, while an image query would use a multimodal embedding. This dynamic routing, combined with multi-stage processing and rank fusion, allows the system to handle a wide variety of user needs and deliver more satisfying, diverse results.
+
+### System Diagrams
+
+Ayush then described the system he demoed in more detail.
+
+![](p5-images/slide_27.png)
+
+*([Timestamp: 27:26](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1642s){target="_blank"})*
+
+The "Represent!" diagram visualizes the document enrichment pipeline. Data from various sources is processed to extract different features (poem captions, NL captions, mood keywords, image content). These are embedded into different vector types and stored, creating multiple "maps" for the same territory.
+
+![](p5-images/slide_28.png)
+
+*([Timestamp: 29:10](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1750s){target="_blank"})*
+
+The "Discover!" diagram shows the retrieval pipeline. User input is routed through various stages where it can be enriched (e.g., mood extraction, query rewriting). These enriched queries are then used in a multi-stage retrieval process involving pre-filtering and hybrid search before final reranking.
+
+---
+
+## Q&A Session
+
+*   **Why do people often think there's only one "map" (representation) for their data?**
+    *([Timestamp: 32:41](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=1961s){target="_blank"})*
+    People often seek a single "best" representation. When it fails, the instinct is to fix it rather than augment it with new, different representations. A better mindset for retrieval is to build and use many specialized "maps" of your data, similar to owning different bicycles for different terrains. Modern models make this easier by helping route queries to the correct map.
+
+*   **How do Reasoning Models and Late-Interaction Models (like ColBERT) fit into this "multiple maps" framework?**
+    *([Timestamp: 35:45](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=2145s){target="_blank"})*
+    They fit well. **Reasoning models** are a form of query enrichment, rewriting confusing queries with necessary context. **Late-interaction models** like ColBERT create diversity *within the model itself* by generating multiple representations (a vector for each token) for a single document. This creates different "modes" in the latent space for more diverse and nuanced search results.
+
+*   **What is routing in this context, and is it just a classifier?**
+    *([Timestamp: 42:31](https://youtu.be/hf9B3knU9vc?si=KCrVC9MDwJXtq-iK&t=2551s){target="_blank"})*
+    Routing is a retrieval stage where you decide which process or index to use based on the query. For a small number of routes, an LLM can act as a simple classifier (e.g., via a tool call). As the number of routes grows, a dedicated, trained classifier becomes more appropriate. LLMs are good for proving the concept of semantic routing, but for scalable classification, a fine-tuned model is a better approach.
+
+* * *
+
+ **👉 _These are the kinds of things we cover in our [AI Evals course](https://bit.ly/evals-ai). You can learn more about [the course here](https://bit.ly/evals-ai)._ 👈**
+
+* * *
+
+## Video
+
+Here is the full video:
+
+{{< video https://youtu.be/hf9B3knU9vc >}}
+
+</example-5>
+<examples>
