@@ -73,9 +73,9 @@ def transcribe(url_or_path, seconds_only=False):
     if not (video_id := _extract_video_id(url_or_path)): 
         raise ValueError(f"Could not extract video ID from '{url_or_path}'")
     try: 
-        transcript_data = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+        transcript_data = YouTubeTranscriptApi().fetch(video_id, languages=['en'])
     except (TranscriptsDisabled, NoTranscriptFound) as e: 
         raise ValueError(f"{str(e)} for video: {video_id}")
     format_func = _format_seconds if seconds_only else _format_timestamp
-    transcript_text = '\n'.join(f"[{format_func(e['start'])}] {e['text']}" for e in transcript_data)
+    transcript_text = '\n'.join(f"[{format_func(e.start)}] {e.text}" for e in transcript_data)
     return transcript_text

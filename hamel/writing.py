@@ -43,18 +43,17 @@ _annotated_post_urls = L(['https://raw.githubusercontent.com/hamelsmu/hamel-site
 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p4_late_interaction.qmd',
 'https://raw.githubusercontent.com/hamelsmu/hamel-site/refs/heads/master/notes/llm/rag/p5_map.qmd'])
 
-# %% ../nbs/05_writing.ipynb 13
+# %% ../nbs/05_writing.ipynb 14
 def outline_slides(slide_path):
     return gem("Provide a numbered list of each slide with a one sentence summary of each.  Just a numbered list please, no other asides or meta explanations of the task are required.", slide_path)
 
-# %% ../nbs/05_writing.ipynb 16
+# %% ../nbs/05_writing.ipynb 17
 def generate_annotated_talk_post(slide_path, 
                                  video_source,  # YouTube link or local MP4 path
                                  image_dir,
                                  transcript_path=None, 
-                                 example_urls=_annotated_post_urls,
-                                 user_prompt=None):
-    "Assemble the prompt for the annotated post. Optional user_prompt provides additional context/examples."
+                                 example_urls=_annotated_post_urls):
+    "Assemble the prompt for the annotated post."
     
     # Check if video_source is a local MP4 or YouTube URL
     is_local_video = Path(video_source).exists() and Path(video_source).suffix.lower() == '.mp4'
@@ -139,8 +138,6 @@ When writing the introduction, annotation and Q&A keep the following writing gui
 
 Please go ahead and draft the post. Please also include front matter similar to the front matter in the examples and select the best slide from the talk as the cover image (which is not the title slide, but instead another interesting slide that is punchy).
 """
-    if user_prompt:
-        prompt += f"\n\nAdditional context/instructions from the user:\n<user-context>\n{user_prompt}\n</user-context>"
     # Use the appropriate video source
     attachment = [slide_path, video_source] if is_local_video else [slide_path, video_source]
     draft_post = gem(prompt, attachment, model='gemini-3-pro-preview')

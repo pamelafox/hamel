@@ -1,0 +1,27 @@
+{
+  "name": "hamel-content-tools",
+  "owner": {
+    "name": "Hamel Husain",
+    "email": "hamel.husain@gmail.com"
+  },
+  "metadata": {
+    "description": "Content creation tools for YouTube, Zoom, and newsletters",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "hamel-content-tools",
+      "description": "YouTube transcripts, Zoom meeting transcripts, Kit newsletters, and AI processing",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/youtube-transcribe",
+        "./skills/youtube-chapters",
+        "./skills/annotate-talk",
+        "./skills/gem",
+        "./skills/zoom",
+        "./skills/kit"
+      ]
+    }
+  ]
+}

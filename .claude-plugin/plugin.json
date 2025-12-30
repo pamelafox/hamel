@@ -1,0 +1,9 @@
+{
+  "name": "hamel-content-tools",
+  "description": "Content creation tools for YouTube transcripts, Zoom meetings, Kit newsletters, and AI processing",
+  "version": "1.1.0",
+  "author": {
+    "name": "Hamel Husain",
+    "email": "hamel.husain@gmail.com"
+  }
+}
