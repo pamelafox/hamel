@@ -53,16 +53,38 @@ Skills are installed to `.agents/skills/` in your workspace. See [Amp Manual - A
 
 ### For Claude Code
 
-**Add the marketplace:**
+**Add marketplaces:**
 
 ```bash
-/plugin marketplace add https://github.com/hamelsmu/hamel
+/plugin marketplace add hamelsmu/hamel
+/plugin marketplace add anthropics/skills
+/plugin marketplace add anthropics/claude-code
 ```
 
-**Install the plugin:**
+**Install hamel-tools skills:**
 
 ```bash
-/plugin install hamel-youtube-tools@hamel-youtube-tools
+/plugin install youtube-transcribe@hamelsmu-hamel
+/plugin install youtube-chapters@hamelsmu-hamel
+/plugin install annotate-talk@hamelsmu-hamel
+/plugin install gem@hamelsmu-hamel
+/plugin install zoom@hamelsmu-hamel
+/plugin install kit@hamelsmu-hamel
+```
+
+**Install recommended Anthropic skills:**
+
+```bash
+/plugin install frontend-design@anthropic-agent-skills
+/plugin install xlsx@anthropic-agent-skills
+```
+
+**Install recommended Anthropic plugins:**
+
+```bash
+/plugin install ralph-wiggum@claude-code-plugins
+/plugin install hookify@claude-code-plugins
+/plugin install plugin-dev@claude-code-plugins
 ```
 
 See [Claude Code Plugin Docs](https://code.claude.com/docs/en/plugin-marketplaces) for details.
