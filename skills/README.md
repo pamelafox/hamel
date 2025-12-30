@@ -31,14 +31,13 @@ Some tools require API keys:
 
 ### For Amp
 
-**Add marketplaces:**
+**Install all hamel-tools skills:**
 
 ```bash
 amp skill add hamelsmu/hamel
-amp skill add anthropics/skills
 ```
 
-**Install hamel-tools skills:**
+**Or install individual skills:**
 
 ```bash
 amp skill add hamelsmu/hamel/youtube-transcribe
