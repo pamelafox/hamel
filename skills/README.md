@@ -31,16 +31,29 @@ Some tools require API keys:
 
 ### For Amp
 
-**Install all skills:**
+**Add marketplaces:**
 
 ```bash
 amp skill add hamelsmu/hamel
+amp skill add anthropics/skills
 ```
 
-**Install a specific skill:**
+**Install hamel-tools skills:**
 
 ```bash
 amp skill add hamelsmu/hamel/youtube-transcribe
+amp skill add hamelsmu/hamel/youtube-chapters
+amp skill add hamelsmu/hamel/annotate-talk
+amp skill add hamelsmu/hamel/gem
+amp skill add hamelsmu/hamel/zoom
+amp skill add hamelsmu/hamel/kit
+```
+
+**Install recommended Anthropic skills:**
+
+```bash
+amp skill add anthropics/skills/frontend-design
+amp skill add anthropics/skills/xlsx
 ```
 
 **List installed skills:**
