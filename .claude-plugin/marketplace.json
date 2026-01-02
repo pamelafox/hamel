@@ -10,34 +10,9 @@
   },
   "plugins": [
     {
-      "name": "youtube-transcribe",
-      "source": "./skills/youtube-transcribe",
-      "description": "Download YouTube video transcripts with timestamps"
-    },
-    {
-      "name": "youtube-chapters",
-      "source": "./skills/youtube-chapters",
-      "description": "Generate chapter summaries from YouTube videos using AI"
-    },
-    {
-      "name": "annotate-talk",
-      "source": "./skills/annotate-talk",
-      "description": "Create annotated blog posts from technical talks with slides"
-    },
-    {
-      "name": "gem",
-      "source": "./skills/gem",
-      "description": "Multimodal AI processing for PDFs, images, videos, and documents"
-    },
-    {
-      "name": "zoom",
-      "source": "./skills/zoom",
-      "description": "Download Zoom meeting transcripts"
-    },
-    {
-      "name": "kit",
-      "source": "./skills/kit",
-      "description": "Fetch Kit (ConvertKit) newsletter broadcasts"
+      "name": "hamel-tools",
+      "source": "./plugins/hamel-tools",
+      "description": "CLI tools for processing YouTube videos, Zoom recordings, and newsletters"
     }
   ]
 }
