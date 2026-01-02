@@ -1,17 +1,13 @@
 {
-  "name": "hamel-tools",
+  "name": "hamel",
   "owner": {
     "name": "Hamel Husain",
     "email": "hamel.husain@gmail.com"
   },
-  "metadata": {
-    "description": "CLI tools for processing YouTube videos, Zoom recordings, and newsletters",
-    "version": "1.1.0"
-  },
   "plugins": [
     {
       "name": "hamel-tools",
-      "source": "./plugins/hamel-tools",
+      "source": "../plugins/hamel-tools",
       "description": "CLI tools for processing YouTube videos, Zoom recordings, and newsletters"
     }
   ]

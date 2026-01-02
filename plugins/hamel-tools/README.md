@@ -1,8 +1,10 @@
-# hamel-tools Plugin for Claude Code
+# hamel-tools Plugin
 
 CLI tools for processing YouTube videos, Zoom recordings, and newsletters.
 
 ## Installation
+
+### Claude Code
 
 ```bash
 # Add the marketplace
@@ -12,39 +14,55 @@ CLI tools for processing YouTube videos, Zoom recordings, and newsletters.
 /plugin install hamel-tools@hamel
 ```
 
-## Available Skills
+### Amp
 
-| Skill | Command | Description |
-|-------|---------|-------------|
-| YouTube Transcribe | `/hamel-tools:youtube-transcribe` | Download YouTube video transcripts |
-| YouTube Chapters | `/hamel-tools:youtube-chapters` | Generate chapter summaries for YouTube videos |
-| Annotate Talk | `/hamel-tools:annotate-talk` | Create annotated blog posts from technical talks |
-| Gem | `/hamel-tools:gem` | General-purpose Gemini API interface |
-| Kit | `/hamel-tools:kit` | Manage Kit/ConvertKit newsletter broadcasts |
-| Zoom | `/hamel-tools:zoom` | Process Zoom transcripts and office hours Q&A |
+```bash
+amp skill add hamelsmu/hamel
+```
+
+Or use the command palette: `/skill-add hamelsmu/hamel`
 
 ## Prerequisites
 
-These skills require the `hamel_tools` CLI package to be installed:
+Install the CLI tools:
 
 ```bash
-pip install git+https://github.com/hamelsmu/hamel.git#subdirectory=hamel_tools
+pip install hamel
 ```
 
 Required environment variables:
-- `GEMINI_API_KEY` - For YouTube chapters, annotate-talk, and gem skills
-- `KIT_API_KEY` - For Kit newsletter skill
-- `JINA_READER_KEY` - For annotate-talk skill
 
-## Development
+| Variable | Required for |
+|----------|--------------|
+| `GEMINI_API_KEY` | youtube-chapters, annotate-talk, gem |
+| `KIT_API_KEY` | kit |
+| `JINA_READER_KEY` | annotate-talk |
+| `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_ACCOUNT_ID` | zoom |
 
-To test locally without publishing:
+## Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| youtube-transcribe | Download YouTube video transcripts |
+| youtube-chapters | Generate chapter summaries for YouTube videos |
+| annotate-talk | Create annotated blog posts from technical talks |
+| gem | Multimodal Gemini API for PDFs, images, videos |
+| kit | Manage Kit/ConvertKit newsletter broadcasts |
+| zoom | Process Zoom transcripts and office hours Q&A |
+
+## Local Development
+
+Test without publishing:
 
 ```bash
-claude --plugin-dir ./plugins/hamel-tools
+# Claude Code
+claude --plugin-dir /path/to/plugins/hamel-tools
+
+# Amp
+amp --skill-dir /path/to/plugins/hamel-tools/skills
 ```
 
-## Validation
+Validate the plugin:
 
 ```bash
 claude plugin validate ./plugins/hamel-tools
