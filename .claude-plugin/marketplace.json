@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "hamel-tools",
-      "source": "../plugins/hamel-tools",
+      "source": "./plugins/hamel-tools",
       "description": "CLI tools for processing YouTube videos, Zoom recordings, and newsletters"
     }
   ]
