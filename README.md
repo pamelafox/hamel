@@ -44,7 +44,7 @@ Simple interface for Google’s Gemini API supporting: - Text generation -
 PDF and image analysis  
 - YouTube video analysis - **Local MP4 video analysis**
 
-See the [gem module documentation](gem.html) for details.
+See the [gem module documentation](https://hamelsmu.github.io/hamel/gem.html) for details.
 
 ### YouTube & Video Utilities (`hamel.yt`)
 
@@ -52,7 +52,7 @@ Tools for working with video content: - Fetch transcripts from YouTube
 videos - **Transcribe local MP4 files using OpenAI Whisper** - Generate
 chapter timestamps for YouTube videos or **local MP4 files**
 
-See the [yt module documentation](yt.html) for details.
+See the [yt module documentation](https://hamelsmu.github.io/hamel/yt.html) for details.
 
 ### Zoom Utilities (`hamel.zoom`)
 
@@ -74,7 +74,7 @@ ZOOM_CLIENT_SECRET=your_client_secret
 ZOOM_ACCOUNT_ID=your_account_id
 ```
 
-See the [zoom module documentation](zoom.html) for details.
+See the [zoom module documentation](https://hamelsmu.github.io/hamel/zoom.html) for details.
 
 ### Writing Utilities (`hamel.writing`)
 
@@ -82,4 +82,4 @@ Tools for content creation: - Convert PDFs to images - Generate
 annotated blog posts from talks (supports **YouTube or MP4 videos**) -
 Gather context from web pages
 
-See the [writing module documentation](writing.html) for details.
+See the [writing module documentation](https://hamelsmu.github.io/hamel/writing.html) for details.
